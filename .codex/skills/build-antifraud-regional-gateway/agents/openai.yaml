@@ -1,0 +1,3 @@
+interface:
+  display_name: "Build Antifraud Regional Gateway"
+  short_description: "Implement trusted regional channel routing"
