@@ -1,7 +1,7 @@
-# Antifraud Regional Gateway
+# Regional Qualification Gateway
 
-Public scaffold for the trusted gateway profile used by the Antifraud data
-space. The gateway will accept product-neutral qualification and identity
+Public scaffold for a trusted qualification data-space gateway. The gateway
+will accept neutral qualification and identity
 evidence operations and route ledger work to the correct regional channel from
 trusted server-side context.
 
@@ -11,10 +11,10 @@ Scaffold only. No API, persistence adapter, blockchain connection, deployment
 profile or executable end-to-end journey exists yet. The deleted historical
 gateway is not a compatibility baseline.
 
-Before implementation, compare the current SOSChain gateway with the required
-Antifraud contracts. Reuse only the neutral, test-proven managers and adapters
-that fit this data space; do not copy product identity, tenants, hosts, sectors,
-channels, credentials or deployment evidence.
+Before implementation, compare the current shared gateway implementation with
+the required qualification contracts. Reuse only neutral, test-proven managers
+and adapters that fit this data space; do not copy product identity, tenants,
+hosts, sectors, channels, credentials or deployment evidence.
 
 ## Channel model
 
@@ -29,33 +29,33 @@ is enabled. A portal, browser, SDK request or environment variable must never
 choose an arbitrary channel. The gateway manager derives the binding from the
 authenticated tenant, qualification domain, jurisdiction and deployed policy.
 
-Operational support is initially divided as follows:
+The intended operational support split is:
 
-- Fundación UNID may support Europe, Africa and the Middle East (EMEA).
-- Antifraud Foundation may support the Americas and Asia-Pacific (APAC),
-  including Oceania.
+- one approved operator for Europe, Africa and the Middle East (EMEA); and
+- one approved operator for the Americas and Asia-Pacific (APAC), including
+  Oceania.
 
-Support does not by itself confer controller authority, issuer authority,
-ledger membership, key custody or access to confidential subject data. Those
-bindings require separate legal, technical and deployment evidence.
+Operator identities belong to governed deployment records, not this public
+repository. Support does not by itself confer controller authority, issuer
+authority, ledger membership, key custody or access to confidential subject
+data. Those bindings require separate legal, technical and deployment
+evidence.
 
 ## Application boundary
 
-The Antifraud controller portal manages organizations, employees, departments,
-groups and reusable workforce authorizations. The
-`qualification-education-nextjs` professional portal will perform authorized
-education subject operations.
+The controller portal manages organizations, employees, departments, groups
+and reusable workforce authorizations. The education professional portal will
+perform authorized education subject operations.
 
-Animal-sector workflows remain in the existing multisector VetChain
-professional portal. VetChain specializes its home by active sector and role
-and may reuse `antifraud-portal-components-react`; there is no separate
-Antifraud animal portal.
+Animal-sector workflows remain in the consuming multisector professional
+portal. That portal specializes its home by active sector and role and may
+reuse the same neutral components; no separate animal application is required.
 
 ## Implementation entry point
 
 Read [the architecture contract](docs/ARCHITECTURE.md), [AGENTS.md](AGENTS.md)
 and
-[`build-antifraud-regional-gateway`](.codex/skills/build-antifraud-regional-gateway/SKILL.md)
+[`build-regional-qualification-gateway`](.codex/skills/build-regional-qualification-gateway/SKILL.md)
 before adding code.
 
 ## Public-repository boundary
@@ -66,4 +66,4 @@ Use synthetic fixtures and public contracts only.
 
 ## Licence
 
-Copyright 2026 Antifraud Services Inc. Licensed under Apache-2.0.
+Licensed under Apache-2.0.

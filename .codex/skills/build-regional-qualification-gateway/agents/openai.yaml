@@ -1,3 +1,3 @@
 interface:
-  display_name: "Build Antifraud Regional Gateway"
+  display_name: "Build Regional Qualification Gateway"
   short_description: "Implement trusted regional channel routing"

@@ -17,18 +17,18 @@ operator and deployment state. Unknown or conflicting bindings fail closed.
 
 The planned support split is:
 
-- Fundación UNID: Europe, Africa and the Middle East (EMEA).
-- Antifraud Foundation: the Americas and Asia-Pacific (APAC), including
+- one approved operator for Europe, Africa and the Middle East (EMEA); and
+- one approved operator for the Americas and Asia-Pacific (APAC), including
   Oceania.
 
-This is an operational support assignment. It must not be interpreted as
-subject consent, organization control, credential issuance authority, ledger
-membership or cryptographic key custody. Each of those requires its own
-verified binding.
+Operator identities belong to governed deployment records and are not named in
+this public repository. Operational support must not be interpreted as subject
+consent, organization control, credential issuance authority, ledger membership
+or cryptographic key custody. Each of those requires its own verified binding.
 
 ## Source evaluation
 
-The current SOSChain gateway may provide a starting point only after a
+The current shared gateway implementation may provide a starting point after a
 capability-by-capability audit. At minimum, compare:
 
 1. claims-first validation and encrypted persistence;
@@ -39,8 +39,8 @@ capability-by-capability audit. At minimum, compare:
 6. OpenAPI, SDK and public example coverage; and
 7. local, local-network and Test Network execution evidence.
 
-Record each capability as adopted, already equivalent, Antifraud-specific or
-rejected. Never merge a complete SOSChain branch or inherit its tenants,
+Record each capability as adopted, already equivalent, profile-specific or
+rejected. Never merge a complete product branch or inherit its tenants,
 domains, channels or deployment configuration.
 
 ## Completion condition
