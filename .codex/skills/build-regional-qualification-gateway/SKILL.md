@@ -1,16 +1,16 @@
 ---
-name: build-antifraud-regional-gateway
-description: Build or review the public Antifraud gateway for qualification operations and trusted regional blockchain-channel routing. Use when evaluating SOSChain gateway reuse, adding regional bindings, or proving an education qualification journey.
+name: build-regional-qualification-gateway
+description: Build or review a public gateway for qualification operations and trusted regional blockchain-channel routing. Use when evaluating shared gateway reuse, adding regional bindings, or proving an education qualification journey.
 ---
 
-# Build Antifraud Regional Gateway
+# Build Regional Qualification Gateway
 
 Read `docs/ARCHITECTURE.md` and `AGENTS.md` completely before changing the
 gateway.
 
-Treat the current SOSChain gateway as a possible source, not a template that
-may be copied wholesale. Inspect its current contracts and record each needed
-capability as adopted, already equivalent, Antifraud-specific or rejected.
+Treat the current shared gateway as a possible source, not a template that may
+be copied wholesale. Inspect its current contracts and record each needed
+capability as adopted, already equivalent, profile-specific or rejected.
 Never inherit product tenants, hosts, channels, credentials, deployment files
 or evidence.
 
@@ -21,9 +21,9 @@ a portal, SDK request or general environment variable. Unknown and conflicting
 bindings fail closed.
 
 Preserve the distinction between regional operational support and authority.
-Fundación UNID may support EMEA and Antifraud Foundation may support the
-Americas and APAC, including Oceania, but those labels do not grant controller,
-issuer, ledger-member, key-custody or confidential-data authority.
+Operator identities remain in governed deployment records. An operator label
+does not grant controller, issuer, ledger-member, key-custody or
+confidential-data authority.
 
 Use red-green-refactor. Prove manager derivation and negative cases first, then
 route integration, high-level SDK behavior, the real local portal journey and
