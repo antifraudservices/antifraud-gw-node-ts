@@ -150,6 +150,48 @@ reference during organization resolution or perform the exact legal-identifier
 and jurisdiction match inside an authorized directory and return opaque
 references to callers.
 
+### Clearing House actors
+
+The Clearing House exposes different views over the same addressed-reference
+workflow. A host controller operates peer discovery, queues, retries, dead
+letters, delivery receipts and unresolved protected organization references.
+That operational role does not permit opening confidential tenant evidence or
+confirming, rejecting, disputing or revoking an item for a tenant.
+
+A tenant controller sees only references addressed to its verified
+organization. It may act where controller policy permits or delegate exact
+capabilities to an organization group: list inbox, open permitted evidence,
+compare authoritative records, propose a decision, approve a decision or
+submit the final signed decision. Group membership alone grants nothing; the
+gateway requires active assignment, membership and reusable group
+authorization for the requested action.
+
+Host observability may expose total pending counts and aggregates by tenant,
+addressed destination, domain, lifecycle and delivery state. It may resolve a
+destination legal identifier and jurisdiction for an authenticated host
+controller's operational display, but general logs, metric labels and
+cross-host indexes carry protected organization references instead of raw
+legal identifiers. Tenant controllers see only delivery state and safe errors
+for items addressed to their organization.
+
+Reuse the audited communication layering where compatible. DIDComm is the
+authenticated and optionally encrypted delivery envelope. Its body, or a
+governed attachment under the negotiated profile, may carry a `collection` or
+`batch` Bundle of one or more `Communication` resources. A `Communication` may
+then reference or attach the protected business-document Bundle. A governed
+`CommMsgExtended` event and durable outbox provide the atomic confidential
+event; FHIR `Communication` is an interoperable projection rather than the
+neutral Antifraud storage model. Preserve queued time, attempt count, last
+attempt, next retry, delivered or failed state, safe error category, source and
+destination host references and receipt reference. Never expose bearer tokens,
+message bodies, evidence or unrestricted diagnostics through observability.
+
+The first MVP is a manual employee workflow. A future machine endpoint or
+artificial-intelligence agent is a separately registered service principal
+with its own workload credential, bounded assignment, exact capabilities and
+audit trail. It may propose a result when authorized but does not inherit
+controller authority or bypass a required human approval.
+
 ### Issuer credentials presented through a wallet
 
 A credential presented through an EUDI Wallet or another supported OpenID for

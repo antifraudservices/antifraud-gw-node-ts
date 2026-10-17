@@ -69,6 +69,31 @@ jurisdiction, validity, revocation and use policy before anchoring an
 externally verified issuer proof. Preserve employer and issuer provenance as
 separate facts.
 
+Enforce Clearing House actor boundaries. Host controllers administer routing,
+queues, retries, dead letters and unresolved-reference envelopes; they cannot
+open confidential tenant evidence or decide for a tenant. Tenant controllers
+see only references addressed to their verified organization and may delegate
+exact inbox actions to groups. Require active assignment, exact membership and
+reusable group authorization for every employee action.
+
+Extend the existing privacy-minimized host observability and durable outbox
+patterns for Clearing House operations. Provide total and per-tenant pending
+counts plus destination, domain, lifecycle, attempts, retry, receipt and safe
+error views. Use protected organization references in indexes, logs and metric
+labels; resolve legal identifier and jurisdiction only for an authorized
+operational display. Tenant controllers see only their addressed items.
+
+Prefer the governed `CommMsgExtended` plus durable outbox transport where its
+contract is compatible. FHIR `Communication` is an optional projection, not
+the neutral persistence model. Do not expose bodies, evidence, tokens or raw
+diagnostics in observability.
+
+Model future machine endpoints and artificial-intelligence agents as separate
+registered service principals with bounded assignments, workload credentials,
+exact capabilities and audit. They may propose decisions when authorized but
+do not inherit controller authority or bypass required human approval. Keep the
+first MVP manual.
+
 Limit the current MVP to education organizations, authorized education
 employees, identity references and `qualification-education-<zone>` evidence.
 Do not implement animal qualification or invoice schemas, routes, portal
