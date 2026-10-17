@@ -9,7 +9,7 @@ smallest manager contract first, then route integration, SDK live behavior and
 the real local portal-to-gateway journey. Mocks do not prove a channel write.
 
 Keep the gateway public and multidomain. The trusted manager derives the
-regional Fabric channel; callers never provide channel or smart-contract
+Fabric zone and channel; callers never provide zone, channel or smart-contract
 names. Claims-first encrypted persistence, tenant isolation, key custody and
 ledger evidence must remain separate concerns. A Fabric channel is never a
 department, professional group, chat or Communication thread.
