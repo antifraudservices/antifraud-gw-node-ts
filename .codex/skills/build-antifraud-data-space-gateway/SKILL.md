@@ -36,6 +36,39 @@ evidence. A veterinary professional's qualification is not an animal
 qualification. Do not migrate existing clinical records merely because a new
 qualification channel exists.
 
+Keep issuer identity, federation membership and qualification evidence
+separate. `identity-<zone>` owns the legal organization reference and any
+verified tenant/service binding. `qualification-education-<zone>` owns the
+employer assertion, credential proof and lifecycle. A non-participating issuer
+may be referenced by a clearly provisional or externally verified organization
+identity, but must not be represented as a tenant, controller or confirming
+issuer.
+
+Model issuer resolution with `participant-resolved`, `identity-resolved` and
+`not-resolved` outcomes. The second may create an
+`awaiting-issuer-onboarding` employer attestation when policy permits. Never
+invent a tenant or service endpoint to turn it into the first outcome.
+
+Do not make issuers scan Fabric channels. Emit privacy-minimized addressed
+reference events to the writing host's local index and expose them through an
+authenticated issuer inbox. The issuer's home host proves organization control
+and sends an exact discovery request to approved federation peers; each peer
+queries only its own local index and returns opaque locators. A federation
+directory may advertise hosts and capabilities but is not the evidence index
+or source of truth. Local indexes must not contain raw evidence, employee
+identity, qualification claims, public legal identifiers or bearer
+credentials, and must never replace authoritative channel readback. Do not
+compare tenant-local keyed hashes across hosts; use a governed federation
+reference or resolve the exact legal identifier and jurisdiction inside an
+authorized directory.
+
+Treat a credential presented through an EUDI Wallet or another supported
+OpenID for Verifiable Presentations flow as issuer evidence, not automatic
+tenant membership. Verify holder binding, signature, type, issuer trust,
+jurisdiction, validity, revocation and use policy before anchoring an
+externally verified issuer proof. Preserve employer and issuer provenance as
+separate facts.
+
 Limit the current MVP to education organizations, authorized education
 employees, identity references and `qualification-education-<zone>` evidence.
 Do not implement animal qualification or invoice schemas, routes, portal
@@ -61,6 +94,12 @@ route integration, high-level SDK behavior, the real local portal journey and
 finally local-network ledger write plus authoritative readback. A mock,
 fixture, screenshot, HTTP success or configured channel name is not ledger
 proof.
+
+The local portal acceptance journey must cover participating and
+non-participating issuers, verified wallet evidence, signed outbox delivery,
+issuer decisions, onboarding recovery and cross-host addressed discovery. Run
+it first against the in-memory network adapter. Do not describe isolated React
+tests or mocked portal routes as this proof.
 
 Keep the repository public-safe. Do not include internal prompts, real hosts,
 credentials, personal data, private organization evidence or unpublished

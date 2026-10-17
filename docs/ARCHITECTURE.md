@@ -61,6 +61,112 @@ not an animal qualification. Vaccinations and existing animal clinical
 certificates remain in `animal-pet-<zone>` unless a separately governed
 migration changes their canonical owner.
 
+## Qualification issuer identity and federation
+
+An education-qualification write must keep three facts separate:
+
+1. the legal identity of the claimed issuer;
+2. whether that organization currently participates in the federation and
+   advertises a qualification-confirmation service; and
+3. the qualification evidence and its verification status.
+
+`identity-<zone>` owns the first two facts. A verified participating
+organization has an authoritative organization reference, tenant reference,
+operational keys and discovered service endpoints. An organization that does
+not yet participate may have only a protected claimed-issuer identity record,
+created from a legal identifier and jurisdiction with explicit
+`unverified` or `externally-verified` provenance. Such a record must never be
+presented as tenant membership, issuer confirmation or controller authority.
+
+`qualification-education-<zone>` owns the third fact. An employer attestation
+references the protected issuer-organization identity and remains visibly an
+employer assertion until an issuer proof or independently verified credential
+is added. Confirmation appends issuer-owned provenance; it does not replace or
+rewrite the employer assertion.
+
+The portal must not choose either identity or qualification channels. Its
+backend submits the issuer's legal identifier and jurisdiction. The gateway
+normalizes them, resolves the organization, derives the governed zone and
+records only protected references on ledger.
+
+Issuer resolution therefore needs three outcomes rather than a binary lookup:
+
+- `participant-resolved`: the organization identity and its authenticated
+  tenant confirmation service are known;
+- `identity-resolved`: the organization identity is known, but it has no
+  federated tenant confirmation service; and
+- `not-resolved`: no authoritative or explicitly provisional organization
+  identity can be established under policy.
+
+For `participant-resolved`, the gateway records the privacy-minimized
+qualification anchor and queues a signed, idempotent tenant-to-tenant
+confirmation request. For `identity-resolved`, it may record an employer
+attestation with `awaiting-issuer-onboarding` status, but it must not fabricate
+an issuer tenant or proof. `not-resolved` fails closed unless a separately
+authorized workflow first creates a clearly provisional claimed-issuer
+identity record.
+
+### Addressed issuer inbox, not channel traversal
+
+An issuer must never enumerate Fabric channels to find evidence that names it.
+Fabric channel isolation is intentional, and a legal identifier is neither a
+safe global search key nor proof of authorization.
+
+Every successful qualification write must create a durable outbox event for
+the writing host's local issuer-reference index. The index contains only the
+protected issuer reference, opaque evidence locator, source host and channel
+family, lifecycle status and event time. It contains no employee identity, raw
+qualification, document, public legal identifier or bearer credential.
+
+Discovery is host-to-host and does not require one central evidence index. A
+participating issuer opens its inbox through its own tenant. Its home host
+proves that the tenant controls the referenced organization identity and sends
+an exact, authenticated discovery request to the approved peer hosts advertised
+by federation discovery. Each peer searches only its local reference index and
+returns matching opaque locators. The home host aggregates those results for
+the issuer. A federation directory may cache host capabilities and routing
+hints, but it must not become the authority for qualification state.
+
+The issuer therefore sees only references addressed to its verified
+organization identity and never needs to know the Fabric channel inventory of
+another host or data space. The host that owns each locator enforces tenant,
+channel and evidence policy before returning evidence or accepting a decision.
+Local indexes are routing and recovery planes, not new sources of truth and not
+copies of channel state.
+
+If the issuer did not participate when the evidence was created, the writing
+host's local index keeps the addressed reference pending. After onboarding
+proves control of the same legal organization identity, the issuer's home host
+binds its tenant service to that identity and performs the same exact discovery
+against federation peers. Peer hosts can then return the historical pending
+references from their local indexes. No historical channel scan is required.
+External email or web notification may be added later, but it must carry only
+a claim invitation and must not expose the evidence.
+
+The exact cross-host protected-reference derivation is a protocol contract.
+Implementations must not assume that tenant-local keyed hashes can be compared
+between hosts. The federation must either issue a governed opaque issuer
+reference during organization resolution or perform the exact legal-identifier
+and jurisdiction match inside an authorized directory and return opaque
+references to callers.
+
+### Issuer credentials presented through a wallet
+
+A credential presented through an EUDI Wallet or another supported OpenID for
+Verifiable Presentations flow is issuer evidence, not automatic federation
+membership. Before registration, the host must verify the presentation and
+holder binding, credential signature and type, issuer trust and jurisdiction,
+validity and revocation status, and the policy authorizing the requested use.
+
+When those checks succeed, the gateway may register a privacy-minimized
+credential anchor and an `externally-verified` issuer proof in
+`qualification-education-<zone>`. It links that proof to the resolved
+organization identity in `identity-<zone>`. It does not create a tenant,
+controller authority or confirmation service for the issuer. When a valid
+issuer credential already supplies the required issuer proof, the employer
+attestation need not wait for a duplicate manual confirmation; both provenance
+paths remain distinguishable in history.
+
 The channel catalog is extensible. A new evidence domain requires an explicit
 domain definition, subject types, searchable claims, ledger-safe projection,
 authorization rules, CCAAS inventory and executable tests. It must not be
@@ -139,6 +245,29 @@ The gateway remains a scaffold until automated journeys prove:
    through the public API after restart; and
 8. the professional portal completes the same workflow through its backend and
    high-level SDK with authoritative state after reload.
+
+The qualification journey additionally remains incomplete until automated
+tests prove all of these paths:
+
+1. a participating issuer is resolved by legal identifier and jurisdiction,
+   receives one signed confirmation request and can confirm, reject or revoke
+   only evidence addressed to it;
+2. a known non-participating issuer produces an
+   `awaiting-issuer-onboarding` employer attestation without fabricated tenant
+   authority, and the reference appears in its inbox after verified onboarding;
+3. a verified wallet credential creates a separate issuer-proof anchor only
+   after signature, trust, status, holder-binding and policy checks succeed;
+4. an issuer can retrieve addressed references through its own host, which
+   performs exact authenticated discovery against peer-host local indexes
+   across zones without listing channels or exposing unrelated evidence;
+5. lost messages can be recovered from the addressed index without treating
+   that index as authoritative qualification state; and
+6. the real local portal, backend, high-level SDK and gateway complete the
+   journey against the in-memory network adapter before any local-network
+   Fabric proof is claimed.
+
+The existing isolated React component tests, callback-based editor fixtures
+and mocked portal routes do not satisfy these conditions.
 
 Animal qualification and invoice tests are explicitly excluded from this MVP.
 Unit tests, mocks, screenshots, HTTP success or configured channel names are
