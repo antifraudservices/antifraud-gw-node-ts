@@ -8,6 +8,31 @@ gateway authenticates the caller, resolves the tenant and active assignment,
 normalizes the qualification domain and jurisdiction, and then derives the
 configured channel binding inside the trusted manager.
 
+## Federated identity channels
+
+The federation preserves the established identity taxonomy:
+
+- `identity-global` is the non-regional plane for natural-person identity
+  commitments, personal-device key bindings and related identity evidence and
+  events;
+- `identity-<region>`, including `identity-eu` and `identity-na`, is the
+  regional plane for legal organizations and their organization-scoped
+  employees, controllers, locations and operational key bindings.
+
+Normal tenant organizations must not be written to `identity-global`.
+Exceptional federation-governance bootstrap records, if required, need a
+separate explicit policy and test and must not weaken the normal routing rule.
+
+The qualification channels are a separate application plane. For example,
+`qualification-education-eu` may reference an organization registered in
+`identity-eu` and a natural person registered in `identity-global` using
+ledger-safe identifiers. It must not copy confidential identity claims between
+channels.
+
+Fabric peers join only the approved channel subset required for their role.
+Shared network membership does not collapse channel state, endorsement policy
+or authorization boundaries.
+
 The initial naming convention is `qualification-<domain>-<region>`, with
 `qualification-education-na` and `qualification-education-eu` as illustrative
 bindings. A maintained catalog must define every supported region, alias,
@@ -58,6 +83,12 @@ The gateway is not complete until automated journeys prove:
 6. unsupported regions fail without falling back to another operator; and
 7. the professional portal completes the same journey through its backend and
    high-level SDK, with authoritative state still present after reload.
+
+The test matrix must additionally prove that natural-person records select
+`identity-global`, regional organizations select the matching
+`identity-<region>` channel, and education qualification records select the
+matching `qualification-education-<region>` channel without duplicating the
+identity record.
 
 Unit tests, mocked adapters, screenshots, an HTTP success or a channel name in
 configuration are not completion evidence.

@@ -20,6 +20,13 @@ approved server-side catalog. Reject any channel or smart-contract name sent by
 a portal, SDK request or general environment variable. Unknown and conflicting
 bindings fail closed.
 
+Preserve the federated identity taxonomy: natural persons use
+`identity-global`; legal organizations and their organization-scoped workers,
+controllers, locations and keys use `identity-<region>`; qualification state
+uses `qualification-<domain>-<region>`. Cross-channel relationships use
+ledger-safe identifiers and never duplicate confidential claims. Treat any
+governance-bootstrap exception as an explicit, separately tested policy.
+
 Preserve the distinction between regional operational support and authority.
 Operator identities remain in governed deployment records. An operator label
 does not grant controller, issuer, ledger-member, key-custody or

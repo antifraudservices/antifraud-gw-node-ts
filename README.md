@@ -18,7 +18,17 @@ hosts, sectors, channels, credentials or deployment evidence.
 
 ## Channel model
 
-The channel family is qualification domain plus governed region, for example:
+The existing identity-channel taxonomy is retained across the Fabric
+federation:
+
+- `identity-global` holds natural-person identity commitments, personal-device
+  key bindings and the related identity evidence and events;
+- `identity-eu`, `identity-na` and other approved `identity-<region>` channels
+  hold legal organizations and organization-scoped employees, controllers,
+  locations and operational key bindings for that region.
+
+Qualification state remains separate. Its channel family is qualification
+domain plus governed region, for example:
 
 - `qualification-education-na`
 - `qualification-education-eu`
@@ -28,6 +38,12 @@ catalog and exact channel bindings must be approved and tested before a channel
 is enabled. A portal, browser, SDK request or environment variable must never
 choose an arbitrary channel. The gateway manager derives the binding from the
 authenticated tenant, qualification domain, jurisdiction and deployed policy.
+
+A peer may participate in the shared global identity channel and selected
+regional identity and qualification channels. Channel participation does not
+merge their ledgers or authorization policies. Qualification records reference
+the applicable identity commitments; they do not duplicate confidential
+identity data.
 
 The intended operational support split is:
 
