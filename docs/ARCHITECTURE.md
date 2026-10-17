@@ -18,6 +18,9 @@ The federation preserves the established identity taxonomy:
 - `identity-<region>`, including `identity-eu` and `identity-na`, is the
   regional plane for legal organizations and their organization-scoped
   employees, controllers, locations and operational key bindings.
+- `animal-pet-<region>`, including `animal-pet-eu` and `animal-pet-na`, is the
+  regional plane for animal identity, ownership relationships and existing
+  animal clinical certification and provider-index state.
 
 Normal tenant organizations must not be written to `identity-global`.
 Exceptional federation-governance bootstrap records, if required, need a
@@ -28,6 +31,15 @@ The qualification channels are a separate application plane. For example,
 `identity-eu` and a natural person registered in `identity-global` using
 ledger-safe identifiers. It must not copy confidential identity claims between
 channels.
+
+Likewise, `qualification-animal-eu` may reference an animal registered in
+`animal-pet-eu`. This channel is only for a formal credential whose subject is
+the animal and for the evidence supporting that credential. A veterinarian's
+own degree, licence or professional qualification is a person/professional
+qualification and must not be stored as an animal qualification. Existing
+vaccination, animal health certificate and other clinical state remains in
+`animal-pet-<region>` unless a separately governed migration defines a new
+canonical owner.
 
 Fabric peers join only the approved channel subset required for their role.
 Shared network membership does not collapse channel state, endorsement policy
@@ -43,7 +55,9 @@ channels, but Fabric maintains independent contract state in each channel:
 - identity evidence for a regional legal organization or organization-scoped
   worker belongs to the matching `identity-<region>` channel; and
 - evidence supporting an education qualification belongs to the matching
-  `qualification-education-<region>` channel.
+  `qualification-education-<region>` channel; and
+- evidence supporting a formal animal qualification belongs to the matching
+  `qualification-animal-<region>` channel.
 
 Evidence is not copied from an identity channel into a qualification channel.
 The qualification record uses ledger-safe identifiers, hashes or multihashes
@@ -54,7 +68,8 @@ claims remain off ledger.
 The current CCAAS lifecycle inventory must therefore be extended. At minimum,
 the implementation must:
 
-1. add each approved qualification channel to the governed channel inventory;
+1. add each approved education or animal qualification channel to the governed
+   channel inventory;
 2. join the intended peer to that channel before chaincode lifecycle work;
 3. include `evidence-sc` in the deterministic manifest for that channel;
 4. evaluate and normally include `artifact-sc`, `artifactevent-sc` and
@@ -135,6 +150,11 @@ The test matrix must additionally prove that natural-person records select
 `identity-<region>` channel, and education qualification records select the
 matching `qualification-education-<region>` channel without duplicating the
 identity record.
+
+Animal routing tests must prove that animal identity and existing clinical
+state select `animal-pet-<region>`, formal animal qualifications select
+`qualification-animal-<region>`, and veterinary professional qualifications do
+not enter the animal-qualification channel.
 
 It must also poison caller-supplied channel and chaincode values, verify that
 identity evidence cannot be written to a qualification channel or vice versa,

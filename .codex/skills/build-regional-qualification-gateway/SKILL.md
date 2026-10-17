@@ -27,6 +27,13 @@ uses `qualification-<domain>-<region>`. Cross-channel relationships use
 ledger-safe identifiers and never duplicate confidential claims. Treat any
 governance-bootstrap exception as an explicit, separately tested policy.
 
+Keep animal meanings distinct. `animal-pet-<region>` owns animal identity,
+ownership and existing animal clinical state. `qualification-animal-<region>`
+owns only formal credentials whose subject is an animal and their supporting
+evidence. A veterinary professional's qualification is not an animal
+qualification. Do not migrate existing clinical records merely because a new
+qualification channel exists.
+
 When qualification evidence is added, inspect the current CCAAS manifest and
 lifecycle scripts. Extend governed channel membership and commit `evidence-sc`
 on each approved qualification channel. Audit whether `artifact-sc`,

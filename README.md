@@ -26,12 +26,17 @@ federation:
 - `identity-eu`, `identity-na` and other approved `identity-<region>` channels
   hold legal organizations and organization-scoped employees, controllers,
   locations and operational key bindings for that region.
+- `animal-pet-eu`, `animal-pet-na` and other approved
+  `animal-pet-<region>` channels hold animal identity, ownership and the
+  existing animal clinical state for that region.
 
 Qualification state remains separate. Its channel family is qualification
 domain plus governed region, for example:
 
 - `qualification-education-na`
 - `qualification-education-eu`
+- `qualification-animal-na`
+- `qualification-animal-eu`
 
 These are examples, not a complete hard-coded list. The canonical region
 catalog and exact channel bindings must be approved and tested before a channel
@@ -48,9 +53,15 @@ identity data.
 `evidence-sc` remains a reusable contract with independent state in every
 channel where it is committed. Identity evidence stays in the applicable
 identity channel. Qualification evidence is written only to the applicable
-`qualification-education-<region>` channel. The CCAAS package may be reusable,
+`qualification-<domain>-<region>` channel. The CCAAS package may be reusable,
 but peer membership, lifecycle approval, commitment, endorsement policy and
 readback must be completed separately for every new qualification channel.
+
+`qualification-animal-<region>` is reserved for formal credentials whose
+subject is an animal. It does not hold a veterinary professional's personal
+qualification and does not automatically relocate vaccinations, health
+certificates or other clinical records already governed by
+`animal-pet-<region>`.
 
 The intended operational support split is:
 
