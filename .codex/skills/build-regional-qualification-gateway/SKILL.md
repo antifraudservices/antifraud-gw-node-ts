@@ -27,6 +27,14 @@ uses `qualification-<domain>-<region>`. Cross-channel relationships use
 ledger-safe identifiers and never duplicate confidential claims. Treat any
 governance-bootstrap exception as an explicit, separately tested policy.
 
+When qualification evidence is added, inspect the current CCAAS manifest and
+lifecycle scripts. Extend governed channel membership and commit `evidence-sc`
+on each approved qualification channel. Audit whether `artifact-sc`,
+`artifactevent-sc` and `credential-sc` are also required by the complete flow.
+An unchanged CCAAS package can be reused only when its schema and validation are
+already safe for the new domain; channel approval and commitment are still
+separate. Version the package if qualification semantics change.
+
 Preserve the distinction between regional operational support and authority.
 Operator identities remain in governed deployment records. An operator label
 does not grant controller, issuer, ledger-member, key-custody or

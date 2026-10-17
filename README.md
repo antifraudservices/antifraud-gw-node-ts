@@ -45,6 +45,13 @@ merge their ledgers or authorization policies. Qualification records reference
 the applicable identity commitments; they do not duplicate confidential
 identity data.
 
+`evidence-sc` remains a reusable contract with independent state in every
+channel where it is committed. Identity evidence stays in the applicable
+identity channel. Qualification evidence is written only to the applicable
+`qualification-education-<region>` channel. The CCAAS package may be reusable,
+but peer membership, lifecycle approval, commitment, endorsement policy and
+readback must be completed separately for every new qualification channel.
+
 The intended operational support split is:
 
 - one approved operator for Europe, Africa and the Middle East (EMEA); and
