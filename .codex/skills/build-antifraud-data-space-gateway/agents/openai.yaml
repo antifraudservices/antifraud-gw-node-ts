@@ -1,0 +1,3 @@
+interface:
+  display_name: "Build Antifraud Data Space Gateway"
+  short_description: "Implement trusted multidomain Fabric routing"

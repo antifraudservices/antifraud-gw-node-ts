@@ -1,102 +1,94 @@
-# Regional Qualification Gateway
+# Antifraud Data Space Gateway
 
-Public scaffold for a trusted qualification data-space gateway. The gateway
-will accept neutral qualification and identity
-evidence operations and route ledger work to the correct regional channel from
-trusted server-side context.
+Public scaffold for the multidomain Antifraud data-space gateway. It will
+coordinate identity references, evidence indexes and ledger registration for
+several business domains. Qualifications are one domain; they do not define
+the whole gateway.
 
 ## Status
 
 Scaffold only. No API, persistence adapter, blockchain connection, deployment
-profile or executable end-to-end journey exists yet. The deleted historical
+profile or executable end-to-end journey exists yet. A superseded historical
 gateway is not a compatibility baseline.
 
 Before implementation, compare the current shared gateway implementation with
-the required qualification contracts. Reuse only neutral, test-proven managers
-and adapters that fit this data space; do not copy product identity, tenants,
-hosts, sectors, channels, credentials or deployment evidence.
+the required Antifraud contracts. Reuse only neutral, test-proven managers and
+adapters. Do not inherit another product's tenants, hosts, sectors, channels,
+credentials or deployment evidence.
 
-## Channel model
+## Fabric channel families
 
-The existing identity-channel taxonomy is retained across the Fabric
-federation:
+In this repository, a channel means a Hyperledger Fabric channel. It does not
+mean a chat, message thread, department or user-interface communication
+channel.
 
-- `identity-global` holds natural-person identity commitments, personal-device
-  key bindings and the related identity evidence and events;
-- `identity-eu`, `identity-na` and other approved `identity-<region>` channels
-  hold legal organizations and organization-scoped employees, controllers,
-  locations and operational key bindings for that region.
-- `animal-pet-eu`, `animal-pet-na` and other approved
-  `animal-pet-<region>` channels hold animal identity, ownership and the
-  existing animal clinical state for that region.
+The initial Fabric channel families are:
 
-Qualification state remains separate. Its channel family is qualification
-domain plus governed region, for example:
+- `identity-global`: natural-person identity commitments, personal-device key
+  bindings and related identity evidence and events;
+- `identity-<region>`: legal organizations and their organization-scoped
+  employees, controllers, locations and operational key bindings;
+- `animal-pet-<region>`: animal identity, ownership and existing animal
+  clinical state;
+- `qualification-education-<region>`: education qualifications and supporting
+  evidence;
+- `qualification-animal-<region>`: formal credentials whose subject is an
+  animal and their supporting evidence; and
+- `invoice-<region>`: invoice evidence and disclosure-safe indexes for invoices
+  involving natural persons or legal organizations.
 
-- `qualification-education-na`
-- `qualification-education-eu`
-- `qualification-animal-na`
-- `qualification-animal-eu`
+Examples include `identity-eu`, `identity-na`, `qualification-education-eu`,
+`qualification-animal-na`, `invoice-eu` and `invoice-na`. The approved region
+catalog is governed server-side. A browser, portal or SDK request never selects
+a Fabric channel or smart contract.
 
-These are examples, not a complete hard-coded list. The canonical region
-catalog and exact channel bindings must be approved and tested before a channel
-is enabled. A portal, browser, SDK request or environment variable must never
-choose an arbitrary channel. The gateway manager derives the binding from the
-authenticated tenant, qualification domain, jurisdiction and deployed policy.
+## Invoice evidence
 
-A peer may participate in the shared global identity channel and selected
-regional identity and qualification channels. Channel participation does not
-merge their ledgers or authorization policies. Qualification records reference
-the applicable identity commitments; they do not duplicate confidential
-identity data.
+An invoice may involve a natural person, a legal organization or both. Its
+regional invoice channel references the applicable identity commitments; it
+does not copy confidential identity data. Raw invoices and personal or
+commercial details remain encrypted off ledger. The ledger records only
+approved hashes, content identifiers, proof status, lifecycle events and
+disclosure-safe indexed values.
 
-`evidence-sc` remains a reusable contract with independent state in every
-channel where it is committed. Identity evidence stays in the applicable
-identity channel. Qualification evidence is written only to the applicable
-`qualification-<domain>-<region>` channel. The CCAAS package may be reusable,
-but peer membership, lifecycle approval, commitment, endorsement policy and
-readback must be completed separately for every new qualification channel.
+Energy, telecommunications, retail and other sectors can use the same regional
+invoice channel. Sector classification and authorization remain explicit data
+and policy. Accounting, purchasing, sales or other departments do not receive
+their own Fabric channels: department and group membership determine which
+employees may create, review, attest or read the permitted invoice data.
 
-`qualification-animal-<region>` is reserved for formal credentials whose
-subject is an animal. It does not hold a veterinary professional's personal
-qualification and does not automatically relocate vaccinations, health
-certificates or other clinical records already governed by
-`animal-pet-<region>`.
+Messages, review requests and notifications are Communication records. They
+are not Fabric channels.
 
-The intended operational support split is:
+## Evidence and CCAAS
 
-- one approved operator for Europe, Africa and the Middle East (EMEA); and
-- one approved operator for the Americas and Asia-Pacific (APAC), including
-  Oceania.
-
-Operator identities belong to governed deployment records, not this public
-repository. Support does not by itself confer controller authority, issuer
-authority, ledger membership, key custody or access to confidential subject
-data. Those bindings require separate legal, technical and deployment
-evidence.
+`evidence-sc` can be committed on several approved channels while Fabric keeps
+independent state in each channel. Adding a qualification or invoice channel
+requires peer membership, lifecycle approval, commitment, endorsement policy
+and authoritative readback for that channel. The immutable CCAAS package may
+be reused only when its schema and validation are already safe for the domain;
+otherwise it must be versioned.
 
 ## Application boundary
 
 The controller portal manages organizations, employees, departments, groups
-and reusable workforce authorizations. The education professional portal will
-perform authorized education subject operations.
-
-Animal-sector workflows remain in the consuming multisector professional
-portal. That portal specializes its home by active sector and role and may
-reuse the same neutral components; no separate animal application is required.
+and reusable workforce authorizations. Professional portals specialize their
+home and available operations by sector and role. They reuse shared controlled
+components but never select ledger channels or grant authority in browser
+state.
 
 ## Implementation entry point
 
 Read [the architecture contract](docs/ARCHITECTURE.md), [AGENTS.md](AGENTS.md)
 and
-[`build-regional-qualification-gateway`](.codex/skills/build-regional-qualification-gateway/SKILL.md)
+[`build-antifraud-data-space-gateway`](.codex/skills/build-antifraud-data-space-gateway/SKILL.md)
 before adding code.
 
 ## Public-repository boundary
 
-Do not commit internal prompts, real hosts, credentials, private organization
-evidence, personal data, commercial plans or unpublished deployment details.
-Use synthetic fixtures and public contracts only.
+Do not commit internal prompts, operator or partner identities, real hosts,
+credentials, private organization evidence, personal data, commercial plans or
+unpublished deployment details. Use synthetic fixtures and public contracts.
 
 ## Licence
 

@@ -1,6 +1,6 @@
-# Regional Qualification Gateway agent contract
+# Antifraud Data Space Gateway agent contract
 
-Read `.codex/skills/build-regional-qualification-gateway/SKILL.md` and
+Read `.codex/skills/build-antifraud-data-space-gateway/SKILL.md` and
 `docs/ARCHITECTURE.md` before implementation.
 
 Use red-green-refactor test-driven development. Start each test file with the
@@ -8,10 +8,11 @@ flow-contract comment required by the workspace release discipline. Prove the
 smallest manager contract first, then route integration, SDK live behavior and
 the real local portal-to-gateway journey. Mocks do not prove a channel write.
 
-Keep the gateway public and product-neutral. The trusted manager derives the
-regional ledger channel; callers never provide channel or smart-contract
+Keep the gateway public and multidomain. The trusted manager derives the
+regional Fabric channel; callers never provide channel or smart-contract
 names. Claims-first encrypted persistence, tenant isolation, key custody and
-ledger evidence must remain separate concerns.
+ledger evidence must remain separate concerns. A Fabric channel is never a
+department, professional group, chat or Communication thread.
 
 Do not copy a superseded product gateway. Audit the current shared gateway only
 as a possible neutral source, and record every adopted, equivalent,
