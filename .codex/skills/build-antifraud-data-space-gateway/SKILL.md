@@ -1,6 +1,6 @@
 ---
 name: build-antifraud-data-space-gateway
-description: Build or review the public multidomain Antifraud data-space gateway for identity, qualification, invoice and future evidence operations with trusted regional Fabric routing.
+description: Build or review the education-qualification MVP of the public multidomain Antifraud data-space gateway while preserving future evidence-domain boundaries.
 ---
 
 # Build Antifraud Data Space Gateway
@@ -23,35 +23,35 @@ Communication thread.
 
 Preserve the federated identity taxonomy: natural persons use
 `identity-global`; legal organizations and their organization-scoped workers,
-controllers, locations and keys use `identity-<region>`; qualification state
-uses `qualification-<domain>-<region>`; invoice evidence uses
-`invoice-<region>`. Cross-channel relationships use ledger-safe identifiers and
-never duplicate confidential claims. Treat any governance-bootstrap exception
-as an explicit, separately tested policy.
+controllers, locations and keys use `identity-<zone>`; qualification state
+uses `qualification-<domain>-<zone>`; invoice evidence uses
+`invoice-<sector>-<zone>`. Cross-channel relationships use ledger-safe
+identifiers and never duplicate confidential claims. Treat any
+governance-bootstrap exception as an explicit, separately tested policy.
 
-Keep animal meanings distinct. `animal-pet-<region>` owns animal identity,
-ownership and existing animal clinical state. `qualification-animal-<region>`
+Keep animal meanings distinct. `animal-pet-<zone>` owns animal identity,
+ownership and existing animal clinical state. `qualification-animal-<zone>`
 owns only formal credentials whose subject is an animal and their supporting
 evidence. A veterinary professional's qualification is not an animal
 qualification. Do not migrate existing clinical records merely because a new
 qualification channel exists.
 
-For invoice evidence, reference natural persons from `identity-global` and
-legal organizations from `identity-<region>`. Keep raw invoices, bank details,
-tax identifiers, contacts and line items encrypted off ledger. Sector and
-department affect authorization and index policy; they do not create separate
-Fabric channels. Prove individual-to-organization and
-organization-to-organization invoice flows.
+Limit the current MVP to education organizations, authorized education
+employees, identity references and `qualification-education-<zone>` evidence.
+Do not implement animal qualification or invoice schemas, routes, portal
+screens, CCAAS mappings or tests. Preserve only their documented future channel
+families. Departments affect employee authorization but never create Fabric
+channels.
 
-When an evidence domain is added, inspect the current CCAAS manifest and
-lifecycle scripts. Extend governed channel membership and commit `evidence-sc`
-on each approved domain channel. Audit whether `artifact-sc`,
+For the education MVP, inspect the current CCAAS manifest and lifecycle scripts.
+Extend governed channel membership and commit `evidence-sc` on each approved
+education qualification channel. Audit whether `artifact-sc`,
 `artifactevent-sc` and `credential-sc` are also required. An unchanged CCAAS
 package can be reused only when its schema and validation are already safe for
 the domain; channel approval and commitment are still separate. Version the
 package when semantics change.
 
-Preserve the distinction between regional operational support and authority.
+Preserve the distinction between zone operational support and authority.
 Operator identities remain in governed deployment records. An operator label
 does not grant controller, issuer, ledger-member, key-custody or
 confidential-data authority.
