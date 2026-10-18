@@ -53,6 +53,10 @@ test('completes the authenticated HTTP evidence and issuer-decision journey', as
   assert.ok(address && typeof address === 'object')
   const baseUrl = `http://127.0.0.1:${address.port}`
 
+  const health = await fetch(`${baseUrl}/healthz`)
+  assert.equal(health.status, 200)
+  assert.deepEqual(await health.json(), { status: 'ok' })
+
   const recorded = await jsonRequest(`${baseUrl}/v1/education/qualification-evidence`, 'POST', 'employer-token', {
     evidenceId: 'evidence:http:001', subjectReference: 'person:opaque-http',
     issuer: { legalIdentifier: 'EU-UNIVERSITY-1', jurisdiction: 'ES' },

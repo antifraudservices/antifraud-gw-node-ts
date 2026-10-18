@@ -104,6 +104,11 @@ never selects ledger channels or grants authority in browser state.
 These routes are currently proven with in-memory adapters. They are not Fabric
 or Test Network evidence.
 
+`GET /healthz` is an unauthenticated liveness check and returns no tenant,
+actor or ledger state. `test/local-controller-gateway-server.mjs` is a
+synthetic local-only fixture used by the controller Playwright journey; it is
+not a deployment entry point.
+
 ## Implementation entry point
 
 Read [the architecture contract](docs/ARCHITECTURE.md), [AGENTS.md](AGENTS.md)
