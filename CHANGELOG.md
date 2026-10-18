@@ -10,3 +10,5 @@
 - Reject browser-supplied actor, zone, channel and smart-contract authority.
 - Add in-memory ledger, confidential-vault and addressed-index adapters for
   local contract testing. These adapters are not Fabric evidence.
+- Add an unauthenticated liveness route and a synthetic local server fixture
+  for the controller UI to backend-for-frontend to SDK to gateway journey.

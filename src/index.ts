@@ -449,6 +449,11 @@ async function handleGatewayRequest(
   response: ServerResponse,
 ): Promise<void> {
   try {
+    const url = new URL(request.url ?? '/', 'http://gateway.invalid')
+    if (request.method === 'GET' && url.pathname === '/healthz') {
+      writeJson(response, 200, { status: 'ok' })
+      return
+    }
     const bearerCredential = readBearerCredential(request)
     const actor = bearerCredential ? await input.resolveActor(bearerCredential) : undefined
     if (!actor) {
@@ -456,7 +461,6 @@ async function handleGatewayRequest(
       return
     }
 
-    const url = new URL(request.url ?? '/', 'http://gateway.invalid')
     if (request.method === 'POST' && url.pathname === '/v1/identity/evidence') {
       const body = await readJsonObject(request)
       rejectServerOwnedAuthority(body)
