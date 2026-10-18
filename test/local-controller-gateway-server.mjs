@@ -22,6 +22,7 @@ const actor = Object.freeze({
   capabilities: [
     'identity.evidence.record', 'qualification-evidence:create',
     'controller.organization.read', 'controller.structure.write', 'controller.workforce.write',
+    'qualification-inbox:list', 'qualification-evidence:decide',
   ],
   groupAuthorization: {
     groupReference: 'group:local-controller-evidence',
@@ -41,8 +42,23 @@ const gateway = new EducationQualificationGateway({
     organizationReference: 'organization:example-university',
     tenantId: 'tenant:example-university',
     confirmationService: 'https://example.invalid/qualification-confirmation',
+  }, {
+    legalIdentifier: 'LOCAL-EMPLOYER', jurisdiction: 'ES',
+    organizationReference: 'organization:local-employer', tenantId: 'tenant:local-employer',
+    confirmationService: 'https://local.invalid/qualification-confirmation',
   }]),
   sourceHostReference: 'host:local-controller-e2e',
+})
+
+await gateway.recordEmployerEvidence({
+  actor: {
+    tenantId: 'tenant:source', organizationReference: 'organization:source', employeeReference: 'employee:source-reviewer',
+    active: true, groupReferences: ['group:source-reviewers'], capabilities: ['qualification-evidence:create'],
+  },
+  evidenceId: 'evidence:controller-inbox:001', subjectReference: 'person:opaque:inbox',
+  issuer: { legalIdentifier: 'LOCAL-EMPLOYER', jurisdiction: 'ES' },
+  qualificationReference: 'qualification:controller-inbox:001', documentCid: 'zLocalInboxDocumentCid',
+  encryptedClaims: 'jwe.local.inbox.fixture',
 })
 
 const controller = new OrganizationControllerGateway({ store: new InMemoryControllerAdministrationStore() })
