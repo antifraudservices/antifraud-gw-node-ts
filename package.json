@@ -1,0 +1,26 @@
+{
+  "name": "antifraud-gw-node-ts",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Neutral gateway for governed antifraud evidence workflows",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "npm run build && node --test test/*.test.mjs",
+    "prepublishOnly": "node -e \"throw new Error('Deploy this gateway as an immutable service image; do not publish it to npm.')\""
+  },
+  "engines": {
+    "node": ">=24.0.0"
+  },
+  "license": "Apache-2.0",
+  "devDependencies": {
+    "@types/node": "^24.10.0",
+    "typescript": "^5.9.3"
+  },
+  "dependencies": {
+    "antifraud-data-utils-ts": "0.1.0"
+  }
+}
