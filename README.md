@@ -7,9 +7,13 @@ the whole gateway.
 
 ## Status
 
-Scaffold only. No API, persistence adapter, blockchain connection, deployment
-profile or executable end-to-end journey exists yet. A superseded historical
-gateway is not a compatibility baseline.
+The first executable in-memory contract is implemented. It authenticates a
+server-resolved workforce actor, records neutral employee identity evidence
+(including age-over predicates), records education qualification evidence,
+creates an addressed issuer inbox and accepts issuer decisions. Unit and real
+HTTP integration tests cover these paths. No Fabric adapter, deployment
+profile, local-network transaction or production readiness is claimed yet. A
+superseded historical gateway is not a compatibility baseline.
 
 Before implementation, compare the current shared gateway implementation with
 the required Antifraud contracts. Reuse only neutral, test-proven managers and
@@ -68,19 +72,37 @@ tests.
 
 ## Evidence and CCAAS
 
-For the MVP, `evidence-sc` is evaluated and committed only for the approved
-`qualification-education-<zone>` channels. Fabric keeps independent state in
-each channel. Peer membership, lifecycle approval, commitment, endorsement
-policy and authoritative readback are required. Future evidence domains repeat
-that process in a later increment.
+For the MVP, `evidence-sc` must be evaluated for `identity-global` identity
+evidence and for the approved `qualification-education-<zone>` channels.
+The current implementation uses in-memory adapters only. Fabric keeps
+independent state in each channel, so peer membership, lifecycle approval,
+commitment, endorsement policy and authoritative readback remain required
+before any local-network claim. Future evidence domains repeat that process in
+a later increment.
 
 ## Application boundary
 
-The controller portal manages organizations, employees, departments, groups
-and reusable workforce authorizations. Professional portals specialize their
-home and available operations by sector and role. They reuse shared controlled
-components but never select ledger channels or grant authority in browser
-state.
+The neutral controller portal manages organizations, employees, departments,
+groups, reusable workforce authorizations and the controller-authorized
+employee identity, age-over and employer qualification-evidence workflows.
+Product professional portals specialize sector and role operations separately;
+the current increment does not add an antifraud workflow to a veterinarian or
+another VetChain professional. Every portal reuses controlled components but
+never selects ledger channels or grants authority in browser state.
+
+## Implemented HTTP surface
+
+- `POST /v1/identity/evidence` records a canonical neutral identity-evidence
+  statement and a privacy-minimized `identity-global` anchor.
+- `POST /v1/education/qualification-evidence` records an employer attestation
+  and derives `qualification-education-<zone>` from governed jurisdiction.
+- `GET /v1/clearing-house/inbox` lists only references addressed to the
+  authenticated issuer organization.
+- `POST /v1/clearing-house/evidence/:id/decision` records an addressed issuer
+  confirmation, rejection or revocation.
+
+These routes are currently proven with in-memory adapters. They are not Fabric
+or Test Network evidence.
 
 ## Implementation entry point
 

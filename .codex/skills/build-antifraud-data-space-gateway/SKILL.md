@@ -101,6 +101,21 @@ screens, CCAAS mappings or tests. Preserve only their documented future channel
 families. Departments affect employee authorization but never create Fabric
 channels.
 
+Keep the controller surface neutral. The neutral controller portal owns
+organization and workforce administration and the controller-authorized
+employee identity-evidence, age-over and employer qualification-evidence
+workflows. A controller-created group may carry the required reusable
+capabilities; never hard-code one group identifier as the source of authority.
+The backend must still resolve the active assignment, group membership and
+controller-issued group authorization.
+
+Do not add these Antifraud workflows to a veterinarian or another product
+professional merely because the shared components exist. VetChain may continue
+to expose its current controller administration until the neutral controller
+portal reaches real backend and local-network parity. Remove or redirect the
+product controller surface only after that parity is proven; sector-specific
+professional work remains in its product portal.
+
 For the education MVP, inspect the current CCAAS manifest and lifecycle scripts.
 Extend governed channel membership and commit `evidence-sc` on each approved
 education qualification channel. Audit whether `artifact-sc`,
@@ -120,7 +135,8 @@ finally local-network ledger write plus authoritative readback. A mock,
 fixture, screenshot, HTTP success or configured channel name is not ledger
 proof.
 
-The local portal acceptance journey must cover participating and
+The local neutral controller portal acceptance journey must cover employee
+identity evidence and age-over predicates as well as participating and
 non-participating issuers, verified wallet evidence, signed outbox delivery,
 issuer decisions, onboarding recovery and cross-host addressed discovery. Run
 it first against the in-memory network adapter. Do not describe isolated React

@@ -285,8 +285,12 @@ The gateway remains a scaffold until automated journeys prove:
 6. the same identifier on two channels does not imply shared state;
 7. a local-network write returns a real transaction identifier and is read back
    through the public API after restart; and
-8. the professional portal completes the same workflow through its backend and
-   high-level SDK with authoritative state after reload.
+8. the neutral controller portal completes employee identity, age-over and
+   employer qualification-evidence workflows through its backend and
+   high-level SDK with authoritative state after reload; and
+9. product professional portals remain separate, and no veterinarian or other
+   sector role receives this antifraud workflow merely because it exists in
+   the neutral controller portal.
 
 The qualification journey additionally remains incomplete until automated
 tests prove all of these paths:
@@ -304,7 +308,7 @@ tests prove all of these paths:
    across zones without listing channels or exposing unrelated evidence;
 5. lost messages can be recovered from the addressed index without treating
    that index as authoritative qualification state; and
-6. the real local portal, backend, high-level SDK and gateway complete the
+6. the real local controller portal, backend, high-level SDK and gateway complete the
    journey against the in-memory network adapter before any local-network
    Fabric proof is claimed.
 
