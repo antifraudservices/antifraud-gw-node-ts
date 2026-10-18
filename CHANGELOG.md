@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Pin `antifraud-data-utils-ts@0.1.4` so gateway tests and future delivery
+  managers consume the released Schema.org confidential-document and DIDComm
+  inline/protected-link attachment contracts.
+
 - Add explicit network-profile selection: immediate memory for automated tests,
   a fixed six-second memory simulation only for staging demos, and mandatory
   real Fabric for `local-network`, `test-network` and `network`.
