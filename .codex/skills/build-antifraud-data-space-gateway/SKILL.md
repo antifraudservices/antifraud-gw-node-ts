@@ -109,12 +109,12 @@ capabilities; never hard-code one group identifier as the source of authority.
 The backend must still resolve the active assignment, group membership and
 controller-issued group authorization.
 
-Do not add these Antifraud workflows to a veterinarian or another product
-professional merely because the shared components exist. VetChain may continue
-to expose its current controller administration until the neutral controller
-portal reaches real backend and local-network parity. Remove or redirect the
-product controller surface only after that parity is proven; sector-specific
-professional work remains in its product portal.
+Do not add these Antifraud workflows to a veterinarian or another
+sector-specific professional merely because the shared components exist. A
+sector portal may continue to expose its current controller administration
+until the neutral controller portal reaches real backend and local-network
+parity. Remove or redirect that controller surface only after parity is proven;
+sector-specific professional work remains in its owning portal.
 
 For the education MVP, inspect the current CCAAS manifest and lifecycle scripts.
 Extend governed channel membership and commit `evidence-sc` on each approved

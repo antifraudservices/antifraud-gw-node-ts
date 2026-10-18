@@ -87,7 +87,7 @@ groups, reusable workforce authorizations and the controller-authorized
 employee identity, age-over and employer qualification-evidence workflows.
 Product professional portals specialize sector and role operations separately;
 the current increment does not add an antifraud workflow to a veterinarian or
-another VetChain professional. Every portal reuses controlled components but
+another sector-specific professional. Every portal reuses controlled components but
 never selects ledger channels or grants authority in browser state.
 
 ## Implemented HTTP surface
