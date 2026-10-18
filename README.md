@@ -76,7 +76,10 @@ or grants authority in browser state.
   and derives `qualification-education-<zone>` from governed jurisdiction. Its
   `documentCid` is the complete CIDv1(raw, SHA3-384) multibase base58btc value;
   malformed or profile-mismatched content identifiers fail before any vault,
-  index or ledger write.
+  index or ledger write. Issuer lookup returns one explicit outcome:
+  `participant-resolved`, `identity-resolved` or `not-resolved`. Only the first
+  contains both a tenant and confirmation service; the second remains
+  `awaiting-issuer-onboarding`, and the third fails closed before persistence.
 - `GET /v1/clearing-house/inbox` lists only references addressed to the
   authenticated issuer organization.
 - `POST /v1/clearing-house/evidence/:id/decision` records an addressed issuer

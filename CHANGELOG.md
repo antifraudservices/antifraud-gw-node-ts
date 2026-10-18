@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Replace optional-field issuer inference with explicit
+  `participant-resolved`, `identity-resolved` and `not-resolved` outcomes.
+  Reject incomplete participant directory bindings and preserve the
+  no-fabricated-tenant onboarding path.
 - Validate every qualification `documentCid` as the complete governed
   CIDv1(raw, SHA3-384) value before issuer resolution or persistence, and reuse
   the canonical synthetic fixture from `antifraud-data-utils-ts` in gateway,
