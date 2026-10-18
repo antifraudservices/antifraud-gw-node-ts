@@ -46,11 +46,24 @@ export type IdentityEvidenceAnchor = Readonly<{
   recordedAt: string
 }>
 
-export type ResolvedIssuer = Readonly<{
+export type ParticipantResolvedIssuer = Readonly<{
   organizationReference: string
-  tenantId?: string
-  confirmationService?: string
+  tenantId: string
+  confirmationService: string
 }>
+
+export type IssuerResolution =
+  | Readonly<{
+      kind: 'participant-resolved'
+      issuer: ParticipantResolvedIssuer
+    }>
+  | Readonly<{
+      kind: 'identity-resolved'
+      organizationReference: string
+    }>
+  | Readonly<{
+      kind: 'not-resolved'
+    }>
 
 export type QualificationAnchor = Readonly<{
   evidenceId: string
@@ -87,7 +100,7 @@ type IssuerDirectoryEntry = Readonly<{
 }>
 
 export interface IssuerDirectory {
-  resolve(input: { legalIdentifier: string; jurisdiction: string }): Promise<ResolvedIssuer | undefined>
+  resolve(input: { legalIdentifier: string; jurisdiction: string }): Promise<IssuerResolution>
 }
 
 export interface QualificationLedger {
@@ -118,6 +131,11 @@ export class StaticIssuerDirectory implements IssuerDirectory {
   readonly #entries: readonly IssuerDirectoryEntry[]
 
   constructor(entries: readonly IssuerDirectoryEntry[]) {
+    for (const entry of entries) {
+      if (Boolean(entry.tenantId) !== Boolean(entry.confirmationService)) {
+        throw new TypeError('A participating issuer requires both tenantId and confirmationService.')
+      }
+    }
     this.#entries = entries.map(entry => ({
       ...entry,
       legalIdentifier: normalize(entry.legalIdentifier),
@@ -125,16 +143,22 @@ export class StaticIssuerDirectory implements IssuerDirectory {
     }))
   }
 
-  async resolve(input: { legalIdentifier: string; jurisdiction: string }): Promise<ResolvedIssuer | undefined> {
+  async resolve(input: { legalIdentifier: string; jurisdiction: string }): Promise<IssuerResolution> {
     const legalIdentifier = normalize(input.legalIdentifier)
     const jurisdiction = normalizeJurisdiction(input.jurisdiction)
     const entry = this.#entries.find(candidate =>
       candidate.legalIdentifier === legalIdentifier && candidate.jurisdiction === jurisdiction)
-    if (!entry) return undefined
+    if (!entry) return { kind: 'not-resolved' }
+    if (!entry.tenantId || !entry.confirmationService) {
+      return { kind: 'identity-resolved', organizationReference: entry.organizationReference }
+    }
     return {
-      organizationReference: entry.organizationReference,
-      ...(entry.tenantId ? { tenantId: entry.tenantId } : {}),
-      ...(entry.confirmationService ? { confirmationService: entry.confirmationService } : {}),
+      kind: 'participant-resolved',
+      issuer: {
+        organizationReference: entry.organizationReference,
+        tenantId: entry.tenantId,
+        confirmationService: entry.confirmationService,
+      },
     }
   }
 }
@@ -312,21 +336,26 @@ export class EducationQualificationGateway {
 
     const jurisdiction = normalizeJurisdiction(input.issuer.jurisdiction)
     const channel = `qualification-education-${zoneForJurisdiction(jurisdiction)}`
-    const issuer = await this.#directory.resolve({
+    const resolution = await this.#directory.resolve({
       legalIdentifier: input.issuer.legalIdentifier,
       jurisdiction,
     })
-    if (!issuer) throw new Error('Issuer could not be resolved under the governed directory policy.')
+    if (resolution.kind === 'not-resolved') {
+      throw new Error('Issuer could not be resolved under the governed directory policy.')
+    }
 
     const now = this.#clock()
-    const status: EvidenceStatus = issuer.tenantId && issuer.confirmationService
+    const status: EvidenceStatus = resolution.kind === 'participant-resolved'
       ? 'pending-issuer-confirmation'
       : 'awaiting-issuer-onboarding'
+    const issuerOrganizationReference = resolution.kind === 'participant-resolved'
+      ? resolution.issuer.organizationReference
+      : resolution.organizationReference
     const anchor: QualificationAnchor = {
       evidenceId: input.evidenceId,
       subjectReference: input.subjectReference,
       employerOrganizationReference: input.actor.organizationReference,
-      issuerOrganizationReference: issuer.organizationReference,
+      issuerOrganizationReference,
       qualificationReference: input.qualificationReference,
       documentCid: input.documentCid,
       status,
@@ -338,7 +367,7 @@ export class EducationQualificationGateway {
     await this.#vault.put(input.evidenceId, input.encryptedClaims)
     const recorded = await this.#ledger.create(channel, anchor)
     await this.#index.put({
-      destinationOrganizationReference: issuer.organizationReference,
+      destinationOrganizationReference: issuerOrganizationReference,
       evidenceLocator: input.evidenceId,
       sourceHostReference: this.#sourceHostReference,
       channelFamily: 'qualification-education',

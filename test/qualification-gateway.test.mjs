@@ -31,6 +31,34 @@ function buildGateway() {
   return { gateway: new EducationQualificationGateway({ ledger, index, directory }), ledger, index }
 }
 
+test('resolves issuers into explicit participant, identity-only and unresolved outcomes', async () => {
+  const directory = new StaticIssuerDirectory([
+    { legalIdentifier: 'EU-UNIVERSITY-1', jurisdiction: 'ES', organizationReference: 'org:issuer', tenantId: 'tenant-issuer', confirmationService: 'https://issuer.invalid/confirm' },
+    { legalIdentifier: 'EU-UNIVERSITY-2', jurisdiction: 'ES', organizationReference: 'org:known-issuer' },
+  ])
+
+  assert.deepEqual(await directory.resolve({ legalIdentifier: 'EU-UNIVERSITY-1', jurisdiction: 'es' }), {
+    kind: 'participant-resolved',
+    issuer: {
+      organizationReference: 'org:issuer',
+      tenantId: 'tenant-issuer',
+      confirmationService: 'https://issuer.invalid/confirm',
+    },
+  })
+  assert.deepEqual(await directory.resolve({ legalIdentifier: 'EU-UNIVERSITY-2', jurisdiction: 'ES' }), {
+    kind: 'identity-resolved',
+    organizationReference: 'org:known-issuer',
+  })
+  assert.deepEqual(await directory.resolve({ legalIdentifier: 'UNKNOWN', jurisdiction: 'ES' }), {
+    kind: 'not-resolved',
+  })
+
+  assert.throws(() => new StaticIssuerDirectory([{
+    legalIdentifier: 'EU-INCOMPLETE', jurisdiction: 'ES', organizationReference: 'org:incomplete',
+    tenantId: 'tenant-without-service',
+  }]), /requires both tenantId and confirmationService/i)
+})
+
 test('derives the education channel and completes participant issuer confirmation with authoritative readback', async () => {
   const { gateway, ledger, index } = buildGateway()
   const result = await gateway.recordEmployerEvidence({
