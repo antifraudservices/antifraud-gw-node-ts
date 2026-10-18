@@ -1,4 +1,4 @@
-// Flow contract: the public neutral gateway implementation, architecture and skill contain no downstream product or organization branding. Sector-specific applications may consume the contracts but are never architectural authorities for this repository.
+// Flow contract: the public gateway implementation, architecture and skill contain no unrelated product or organization branding.
 import assert from 'node:assert/strict'
 import { readFileSync, readdirSync, statSync } from 'node:fs'
 import { join } from 'node:path'
