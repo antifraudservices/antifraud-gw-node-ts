@@ -84,9 +84,11 @@ labels; resolve legal identifier and jurisdiction only for an authorized
 operational display. Tenant controllers see only their addressed items.
 
 Prefer the governed `CommMsgExtended` plus durable outbox transport where its
-contract is compatible. FHIR `Communication` is an optional projection, not
-the neutral persistence model. Do not expose bodies, evidence, tokens or raw
-diagnostics in observability.
+contract is compatible. Antifraud is Schema.org-native: documents are
+`DigitalDocument`/`MediaObject`, never FHIR `DocumentReference`. Binary files
+travel through DIDComm `attachments[]` inline or by protected reference and
+are stored only in confidential artifact storage. Do not expose bodies,
+evidence, tokens or raw diagnostics in observability.
 
 Model future machine endpoints and artificial-intelligence agents as separate
 registered service principals with bounded assignments, workload credentials,
