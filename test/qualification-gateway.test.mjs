@@ -1,6 +1,7 @@
 // Flow contract: an authorized education employee records encrypted qualification evidence without choosing a ledger target; the trusted gateway derives the zone and channel, persists an authoritative anchor with a transaction identifier, creates one privacy-minimized addressed reference, supports exact issuer inbox discovery and accepts only issuer-owned decisions. A known non-participating issuer remains awaiting onboarding. Inactive assignments, missing capabilities, mismatched organizations and caller-supplied channels fail closed.
 import assert from 'node:assert/strict'
 import test from 'node:test'
+import { SyntheticConfidentialDocumentFixture } from 'antifraud-data-utils-ts'
 import {
   EducationQualificationGateway,
   InMemoryAddressedReferenceIndex,
@@ -18,6 +19,7 @@ const issuerActor = {
   active: true, groupReferences: ['group:qualification-decisions'],
   capabilities: ['qualification-inbox:list', 'qualification-evidence:decide'],
 }
+const validDocumentCid = SyntheticConfidentialDocumentFixture.attachment.contentId
 
 function buildGateway() {
   const ledger = new InMemoryQualificationLedger()
@@ -35,7 +37,7 @@ test('derives the education channel and completes participant issuer confirmatio
     actor: employerActor,
     evidenceId: 'evidence:001', subjectReference: 'person:opaque-subject',
     issuer: { legalIdentifier: 'EU-UNIVERSITY-1', jurisdiction: 'ES' },
-    qualificationReference: 'qualification:opaque-1', documentCid: 'zQmOpaqueCid',
+    qualificationReference: 'qualification:opaque-1', documentCid: validDocumentCid,
     encryptedClaims: 'jwe.compact.payload',
   })
 
@@ -65,7 +67,7 @@ test('keeps a known non-participating issuer awaiting verified onboarding', asyn
     actor: employerActor,
     evidenceId: 'evidence:002', subjectReference: 'person:opaque-subject-2',
     issuer: { legalIdentifier: 'EU-UNIVERSITY-2', jurisdiction: 'ES' },
-    qualificationReference: 'qualification:opaque-2', documentCid: 'zQmOpaqueCid2',
+    qualificationReference: 'qualification:opaque-2', documentCid: validDocumentCid,
     encryptedClaims: 'jwe.compact.payload.2',
   })
   assert.equal(result.status, 'awaiting-issuer-onboarding')
@@ -78,13 +80,18 @@ test('fails closed for client-selected infrastructure and invalid workforce auth
     actor: employerActor,
     evidenceId: 'evidence:003', subjectReference: 'person:opaque-subject-3',
     issuer: { legalIdentifier: 'EU-UNIVERSITY-1', jurisdiction: 'ES' },
-    qualificationReference: 'qualification:opaque-3', documentCid: 'zQmOpaqueCid3',
+    qualificationReference: 'qualification:opaque-3', documentCid: validDocumentCid,
     encryptedClaims: 'jwe.compact.payload.3',
   }
   await assert.rejects(() => gateway.recordEmployerEvidence({ ...request, channel: 'identity-global' }), /must not select/i)
   await assert.rejects(() => gateway.recordEmployerEvidence({ ...request, actor: { ...employerActor, active: false } }), /active assignment/i)
   await assert.rejects(() => gateway.recordEmployerEvidence({ ...request, actor: { ...employerActor, capabilities: [] } }), /capability/i)
   await assert.rejects(() => gateway.recordEmployerEvidence({ ...request, issuer: { legalIdentifier: 'UNKNOWN', jurisdiction: 'ES' } }), /issuer could not be resolved/i)
+  await assert.rejects(() => gateway.recordEmployerEvidence({
+    ...request,
+    evidenceId: 'evidence:invalid-cid',
+    documentCid: 'z123',
+  }), /CIDv1 raw with a SHA3-384 multihash/i)
 })
 
 test('does not let another organization list or decide addressed evidence', async () => {
@@ -93,7 +100,7 @@ test('does not let another organization list or decide addressed evidence', asyn
     actor: employerActor,
     evidenceId: 'evidence:004', subjectReference: 'person:opaque-subject-4',
     issuer: { legalIdentifier: 'EU-UNIVERSITY-1', jurisdiction: 'ES' },
-    qualificationReference: 'qualification:opaque-4', documentCid: 'zQmOpaqueCid4',
+    qualificationReference: 'qualification:opaque-4', documentCid: validDocumentCid,
     encryptedClaims: 'jwe.compact.payload.4',
   })
   const intruder = { ...issuerActor, tenantId: 'tenant-other', organizationReference: 'org:other' }
@@ -115,7 +122,7 @@ test('retains the trusted North American route across gateway recreation without
     actor: employerActor,
     evidenceId: 'evidence:na:001', subjectReference: 'person:opaque-subject-na',
     issuer: { legalIdentifier: 'NA-UNIVERSITY-1', jurisdiction: 'US' },
-    qualificationReference: 'qualification:opaque-na', documentCid: 'zQmOpaqueCidNa',
+    qualificationReference: 'qualification:opaque-na', documentCid: validDocumentCid,
     encryptedClaims: 'jwe.compact.payload.na',
   })
   assert.equal(recorded.channel, 'qualification-education-na')

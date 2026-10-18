@@ -73,7 +73,10 @@ or grants authority in browser state.
 - `POST /v1/identity/evidence` records a canonical neutral identity-evidence
   statement and a privacy-minimized `identity-global` anchor.
 - `POST /v1/education/qualification-evidence` records an employer attestation
-  and derives `qualification-education-<zone>` from governed jurisdiction.
+  and derives `qualification-education-<zone>` from governed jurisdiction. Its
+  `documentCid` is the complete CIDv1(raw, SHA3-384) multibase base58btc value;
+  malformed or profile-mismatched content identifiers fail before any vault,
+  index or ledger write.
 - `GET /v1/clearing-house/inbox` lists only references addressed to the
   authenticated issuer organization.
 - `POST /v1/clearing-house/evidence/:id/decision` records an addressed issuer

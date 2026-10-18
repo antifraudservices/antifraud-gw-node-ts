@@ -1,5 +1,6 @@
 // Flow fixture: expose the real local HTTP handler with one synthetic server-resolved workforce actor so the neutral controller Playwright journey can prove UI -> BFF -> high-level SDK -> gateway writes. The browser never receives the bearer or authority tuple. This fixture is in-memory only and is not Fabric, Test Network or production evidence.
 import { createServer } from 'node:http'
+import { SyntheticConfidentialDocumentFixture } from 'antifraud-data-utils-ts'
 import {
   EducationQualificationGateway,
   InMemoryAddressedReferenceIndex,
@@ -57,7 +58,8 @@ await gateway.recordEmployerEvidence({
   },
   evidenceId: 'evidence:controller-inbox:001', subjectReference: 'person:opaque:inbox',
   issuer: { legalIdentifier: 'LOCAL-EMPLOYER', jurisdiction: 'ES' },
-  qualificationReference: 'qualification:controller-inbox:001', documentCid: 'zLocalInboxDocumentCid',
+  qualificationReference: 'qualification:controller-inbox:001',
+  documentCid: SyntheticConfidentialDocumentFixture.attachment.contentId,
   encryptedClaims: 'jwe.local.inbox.fixture',
 })
 

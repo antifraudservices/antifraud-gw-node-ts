@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+- Validate every qualification `documentCid` as the complete governed
+  CIDv1(raw, SHA3-384) value before issuer resolution or persistence, and reuse
+  the canonical synthetic fixture from `antifraud-data-utils-ts` in gateway,
+  HTTP and local portal journeys.
+- Pin `antifraud-data-utils-ts@0.1.3` for the canonical confidential-document
+  graph, CID validator and shared fixture.
+
 - Add authenticated organization-controller administration for licences,
   invitations, employees, registered devices, groups, departments, reusable
   authorizations, memberships, lifecycle and Communication notifications.

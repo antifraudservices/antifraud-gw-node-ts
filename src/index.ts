@@ -2,6 +2,7 @@ import type { IncomingMessage, RequestListener, ServerResponse } from 'node:http
 import type { OrganizationControllerGateway } from './controller-administration.js'
 import {
   IdentityAttestationCapability,
+  assertSha3_384EvidenceContentId,
   defineAuthorizedWorkforceIdentityEvidenceStatement,
   type IdentityAttestationCapabilityValue,
   type IdentityEvidenceInput,
@@ -306,6 +307,7 @@ export class EducationQualificationGateway {
     requireOpaqueReference(input.subjectReference, 'subjectReference')
     requireOpaqueReference(input.qualificationReference, 'qualificationReference')
     requireOpaqueReference(input.documentCid, 'documentCid')
+    assertSha3_384EvidenceContentId(input.documentCid)
     if (!input.encryptedClaims.trim()) throw new Error('Encrypted claims are required.')
 
     const jurisdiction = normalizeJurisdiction(input.issuer.jurisdiction)
