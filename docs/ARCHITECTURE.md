@@ -166,16 +166,20 @@ legal identifiers. Tenant controllers see only delivery state and safe errors
 for items addressed to their organization.
 
 Reuse the audited communication layering where compatible. DIDComm is the
-authenticated and optionally encrypted delivery envelope. Its body, or a
-governed attachment under the negotiated profile, may carry a `collection` or
-`batch` Bundle of one or more `Communication` resources. A `Communication` may
-then reference or attach the protected business-document Bundle. A governed
-`CommMsgExtended` event and durable outbox provide the atomic confidential
-event; FHIR `Communication` is an interoperable projection rather than the
-neutral Antifraud storage model. Preserve queued time, attempt count, last
+authenticated and optionally encrypted delivery envelope and the binary-file
+transport. The Antifraud body is a JSON:API primary document of neutral
+Communication and Schema.org `DigitalDocument`/`MediaObject` resources. PDF,
+spreadsheet, Word, image, video and other governed bytes travel only in
+DIDComm `attachments[]`, as bounded base64url or protected links plus
+multihash. No FHIR resource or `DocumentReference` belongs in Antifraud. A
+governed `CommMsgExtended` event and durable outbox provide the atomic
+confidential event. Preserve queued time, attempt count, last
 attempt, next retry, delivered or failed state, safe error category, source and
 destination host references and receipt reference. Never expose bearer tokens,
 message bodies, evidence or unrestricted diagnostics through observability.
+
+Execution is tracked in [GitHub issue #1](https://github.com/antifraudservices/antifraud-gw-node-ts/issues/1),
+after the exact released data-utils and SDK versions exist.
 
 The first MVP is a manual employee workflow. A future machine endpoint or
 artificial-intelligence agent is a separately registered service principal

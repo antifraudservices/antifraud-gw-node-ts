@@ -65,6 +65,13 @@ a later increment.
 The neutral controller portal manages organizations, employees, departments,
 groups, reusable workforce authorizations and the controller-authorized
 employee identity, age-over and employer qualification-evidence workflows.
+
+Antifraud document persistence is Schema.org-native: `DigitalDocument` plus
+`MediaObject`. PDF, spreadsheet, Word, image, video and other governed bytes
+arrive through DIDComm `attachments[]` and are stored only in confidential
+artifact storage. They are never FHIR `DocumentReference` resources and never
+enter Fabric. Gateway implementation is tracked in
+[GitHub issue #1](https://github.com/antifraudservices/antifraud-gw-node-ts/issues/1).
 The controller reuses controlled components but never selects ledger channels
 or grants authority in browser state.
 
