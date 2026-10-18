@@ -6,7 +6,9 @@ import test from 'node:test'
 import {
   EducationQualificationGateway,
   InMemoryAddressedReferenceIndex,
+  InMemoryControllerAdministrationStore,
   InMemoryQualificationLedger,
+  OrganizationControllerGateway,
   StaticIssuerDirectory,
   createAntifraudGatewayHttpHandler,
 } from '../dist/index.js'
@@ -30,6 +32,11 @@ const actors = new Map([
       controllerReference: 'controller:employer', status: 'active', capabilities: ['identity.evidence.record'],
     },
   }],
+  ['controller-token', {
+    tenantId: 'tenant-employer', organizationReference: 'org:employer', employeeReference: 'employee:controller',
+    active: true, groupReferences: ['group:controllers'],
+    capabilities: ['controller.organization.read', 'controller.structure.write', 'controller.workforce.write'],
+  }],
 ])
 
 test('completes the authenticated HTTP evidence and issuer-decision journey', async t => {
@@ -43,6 +50,7 @@ test('completes the authenticated HTTP evidence and issuer-decision journey', as
   })
   const handler = createAntifraudGatewayHttpHandler({
     gateway,
+    controller: new OrganizationControllerGateway({ store: new InMemoryControllerAdministrationStore() }),
     resolveActor: async bearer => actors.get(bearer),
   })
   const server = createServer(handler)
@@ -103,6 +111,16 @@ test('completes the authenticated HTTP evidence and issuer-decision journey', as
   assert.equal(identityEvidence.response.status, 201)
   assert.equal(identityEvidence.body.channel, 'identity-global')
   assert.equal(identityEvidence.body.anchor.targetKinds[0], 'predicate')
+
+  const createdDepartment = await jsonRequest(`${baseUrl}/v1/controller/departments`, 'POST', 'controller-token', {name: 'Operations'})
+  assert.equal(createdDepartment.response.status, 201)
+  const state = await jsonRequest(`${baseUrl}/v1/controller/workspace`, 'GET', 'controller-token')
+  assert.equal(state.response.status, 200)
+  assert.equal(state.body.departments[0].name, 'Operations')
+  const authorityInjection = await jsonRequest(`${baseUrl}/v1/controller/departments`, 'POST', 'controller-token', {
+    name: 'Injected', organizationReference: 'org:other',
+  })
+  assert.equal(authorityInjection.response.status, 400)
 })
 
 async function jsonRequest(url, method, token, body) {

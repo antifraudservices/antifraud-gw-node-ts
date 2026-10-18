@@ -1,4 +1,5 @@
 import type { IncomingMessage, RequestListener, ServerResponse } from 'node:http'
+import type { OrganizationControllerGateway } from './controller-administration.js'
 import {
   IdentityAttestationCapability,
   defineAuthorizedWorkforceIdentityEvidenceStatement,
@@ -6,6 +7,7 @@ import {
   type IdentityEvidenceInput,
   type IdentityEvidenceTarget,
 } from 'antifraud-data-utils-ts'
+export * from './controller-administration.js'
 
 export type EvidenceStatus =
   | 'pending-issuer-confirmation'
@@ -433,6 +435,7 @@ export class EducationQualificationGateway {
 
 export function createAntifraudGatewayHttpHandler(input: {
   gateway: EducationQualificationGateway
+  controller?: OrganizationControllerGateway
   resolveActor: (bearerCredential: string) => Promise<WorkforceActor | undefined>
 }): RequestListener {
   return (request, response) => {
@@ -443,6 +446,7 @@ export function createAntifraudGatewayHttpHandler(input: {
 async function handleGatewayRequest(
   input: {
     gateway: EducationQualificationGateway
+    controller?: OrganizationControllerGateway
     resolveActor: (bearerCredential: string) => Promise<WorkforceActor | undefined>
   },
   request: IncomingMessage,
@@ -458,6 +462,100 @@ async function handleGatewayRequest(
     const actor = bearerCredential ? await input.resolveActor(bearerCredential) : undefined
     if (!actor) {
       writeJson(response, 401, { error: 'Authentication is required.' })
+      return
+    }
+
+    if (request.method === 'GET' && url.pathname === '/v1/controller/workspace') {
+      if (!input.controller) throw new Error('Controller administration is not configured.')
+      writeJson(response, 200, await input.controller.readWorkspace({ actor }))
+      return
+    }
+
+    if (request.method === 'POST' && url.pathname === '/v1/controller/departments') {
+      if (!input.controller) throw new Error('Controller administration is not configured.')
+      const body = await readJsonObject(request)
+      rejectServerOwnedAuthority(body)
+      writeJson(response, 201, await input.controller.createDepartment({
+        actor, name: body.name as string, organizationReference: body.organizationReference,
+      }))
+      return
+    }
+
+    if (request.method === 'POST' && url.pathname === '/v1/controller/groups') {
+      if (!input.controller) throw new Error('Controller administration is not configured.')
+      const body = await readJsonObject(request)
+      rejectServerOwnedAuthority(body)
+      writeJson(response, 201, await input.controller.createGroup({
+        actor, name: body.name as string, capabilities: body.capabilities as string[], organizationReference: body.organizationReference,
+      }))
+      return
+    }
+
+    if (request.method === 'POST' && url.pathname === '/v1/controller/invitations') {
+      if (!input.controller) throw new Error('Controller administration is not configured.')
+      const body = await readJsonObject(request)
+      rejectServerOwnedAuthority(body)
+      writeJson(response, 201, await input.controller.createInvitation({
+        actor, email: body.email as string, role: body.role as string,
+        groupReferences: body.groupReferences as string[], departmentReferences: body.departmentReferences as string[],
+        organizationReference: body.organizationReference,
+      }))
+      return
+    }
+
+    const invitationAcceptMatch = request.method === 'POST'
+      ? url.pathname.match(/^\/v1\/controller\/invitations\/([^/]+)\/accept$/u)
+      : undefined
+    if (invitationAcceptMatch) {
+      if (!input.controller) throw new Error('Controller administration is not configured.')
+      const body = await readJsonObject(request)
+      rejectServerOwnedAuthority(body)
+      writeJson(response, 200, await input.controller.acceptInvitation({
+        actor, invitationReference: decodeURIComponent(invitationAcceptMatch[1]),
+        deviceReference: body.deviceReference as string, organizationReference: body.organizationReference,
+      }))
+      return
+    }
+
+    const employeeMembershipMatch = request.method === 'PUT'
+      ? url.pathname.match(/^\/v1\/controller\/employees\/([^/]+)\/memberships$/u)
+      : undefined
+    if (employeeMembershipMatch) {
+      if (!input.controller) throw new Error('Controller administration is not configured.')
+      const body = await readJsonObject(request)
+      rejectServerOwnedAuthority(body)
+      writeJson(response, 200, await input.controller.setEmployeeMemberships({
+        actor, employeeReference: decodeURIComponent(employeeMembershipMatch[1]),
+        groupReferences: body.groupReferences as string[], departmentReferences: body.departmentReferences as string[],
+        organizationReference: body.organizationReference,
+      }))
+      return
+    }
+
+    const employeeStatusMatch = request.method === 'PUT'
+      ? url.pathname.match(/^\/v1\/controller\/employees\/([^/]+)\/status$/u)
+      : undefined
+    if (employeeStatusMatch) {
+      if (!input.controller) throw new Error('Controller administration is not configured.')
+      const body = await readJsonObject(request)
+      rejectServerOwnedAuthority(body)
+      writeJson(response, 200, await input.controller.setEmployeeStatus({
+        actor, employeeReference: decodeURIComponent(employeeStatusMatch[1]),
+        status: body.status as 'active' | 'inactive', organizationReference: body.organizationReference,
+      }))
+      return
+    }
+
+    const employeeDeleteMatch = request.method === 'DELETE'
+      ? url.pathname.match(/^\/v1\/controller\/employees\/([^/]+)$/u)
+      : undefined
+    if (employeeDeleteMatch) {
+      if (!input.controller) throw new Error('Controller administration is not configured.')
+      const body = await readOptionalJsonObject(request)
+      rejectServerOwnedAuthority(body)
+      writeJson(response, 200, await input.controller.purgeEmployee({
+        actor, employeeReference: decodeURIComponent(employeeDeleteMatch[1]), organizationReference: body.organizationReference,
+      }))
       return
     }
 
@@ -528,6 +626,15 @@ async function readJsonObject(request: IncomingMessage): Promise<Record<string, 
     chunks.push(buffer)
   }
   if (chunks.length === 0) throw new Error('A JSON request body is required.')
+  const parsed: unknown = JSON.parse(Buffer.concat(chunks).toString('utf8'))
+  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) throw new Error('A JSON object is required.')
+  return parsed as Record<string, unknown>
+}
+
+async function readOptionalJsonObject(request: IncomingMessage): Promise<Record<string, unknown>> {
+  const chunks: Buffer[] = []
+  for await (const chunk of request) chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk))
+  if (!chunks.length) return {}
   const parsed: unknown = JSON.parse(Buffer.concat(chunks).toString('utf8'))
   if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) throw new Error('A JSON object is required.')
   return parsed as Record<string, unknown>

@@ -49,17 +49,8 @@ The current MVP channel family is:
 
 - `qualification-education-<zone>` for education qualifications.
 
-Reserved future channel families are:
-
-- `qualification-animal-<zone>` for formal credentials whose subject is an
-  animal; and
-- `invoice-<sector>-<zone>` for invoice evidence and invoice indexes issued
-  by organizations verified for that business sector.
-
-A veterinary professional's degree or licence is a professional qualification,
-not an animal qualification. Vaccinations and existing animal clinical
-certificates remain in `animal-pet-<zone>` unless a separately governed
-migration changes their canonical owner.
+Other channel families require a separate governed increment and are not
+defined by this repository yet.
 
 ## Qualification issuer identity and federation
 
@@ -214,20 +205,6 @@ domain definition, subject types, searchable claims, ledger-safe projection,
 authorization rules, CCAAS inventory and executable tests. It must not be
 introduced by accepting an arbitrary channel family from a caller.
 
-## Future sector-and-zone invoice index — not MVP
-
-The reserved family is `invoice-<sector>-<zone>`. The future trusted manager
-will derive it from the verified issuer organization, sector, jurisdiction and
-governed Fabric zone. The
-recipient may belong to another sector, but the invoice will have one canonical
-write in the issuer's sector channel. Departments will constrain employee
-authorization and will not create Fabric channels. Raw invoices and
-confidential business or personal data will remain encrypted off ledger.
-
-This section is a retained architectural boundary, not a current deliverable.
-The MVP agent must not implement invoice contracts, schemas, routes, portals,
-CCAAS manifests or acceptance tests.
-
 ## Evidence contracts and CCAAS lifecycle
 
 One immutable `evidence-sc` CCAAS package may be installed on a peer and
@@ -279,18 +256,15 @@ The gateway remains a scaffold until automated journeys prove:
 2. education qualification evidence routes to the exact
    `qualification-education-<zone>` channel;
 3. callers cannot choose or override a channel or smart contract;
-4. organization, assignment, department, group, sector and subject-policy
+4. organization, assignment, department, group and subject-policy
    mismatches fail closed;
 5. confidential claims are encrypted and searchable values are protected;
 6. the same identifier on two channels does not imply shared state;
 7. a local-network write returns a real transaction identifier and is read back
    through the public API after restart; and
-8. the neutral controller portal completes employee identity, age-over and
+8. the controller portal completes employee identity, age-over and
    employer qualification-evidence workflows through its backend and
-   high-level SDK with authoritative state after reload; and
-9. product professional portals remain separate, and no veterinarian or other
-   sector role receives this antifraud workflow merely because it exists in
-   the neutral controller portal.
+   high-level SDK with authoritative state after reload.
 
 The qualification journey additionally remains incomplete until automated
 tests prove all of these paths:

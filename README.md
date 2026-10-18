@@ -10,21 +10,20 @@ the whole gateway.
 The first executable in-memory contract is implemented. It authenticates a
 server-resolved workforce actor, records neutral employee identity evidence
 (including age-over predicates), records education qualification evidence,
-creates an addressed issuer inbox and accepts issuer decisions. Unit and real
-HTTP integration tests cover these paths. No Fabric adapter, deployment
+creates an addressed issuer inbox, accepts issuer decisions and maintains an
+authenticated organization-controller workspace. Unit and real HTTP
+integration tests cover these paths. No Fabric adapter, deployment
 profile, local-network transaction or production readiness is claimed yet. A
 superseded historical gateway is not a compatibility baseline.
 
 Before implementation, compare the current shared gateway implementation with
 the required Antifraud contracts. Reuse only neutral, test-proven managers and
-adapters. Do not inherit another product's tenants, hosts, sectors, channels,
+adapters. Do not inherit another application's tenants, hosts, channels,
 credentials or deployment evidence.
 
 The current MVP is limited to the identity federation required by education
 organizations and the complete `qualification-education-<zone>` evidence
-journey. Animal qualifications, invoice evidence and other evidence domains are
-documented future extensions and are not implementation or acceptance work for
-this MVP.
+journey. Other evidence domains are outside this implementation.
 
 ## Fabric channel families
 
@@ -41,34 +40,9 @@ The MVP uses:
 - `qualification-education-<zone>`: education qualifications and supporting
   evidence.
 
-Federation compatibility and future channel families include:
-
-- `animal-pet-<zone>`: existing animal identity, ownership and clinical
-  state;
-- `qualification-animal-<zone>`: formal credentials whose subject is an
-  animal and their supporting evidence; and
-- `invoice-<sector>-<zone>`: invoice evidence and disclosure-safe indexes for
-  invoices issued by organizations whose business sector is verified for that
-  channel.
-
-Examples include `identity-eu`, `identity-na`, `qualification-education-eu`,
-`qualification-animal-na`, `invoice-energy-eu`, `invoice-telecom-na` and
-`invoice-retail-eu`. Approved sector and zone catalogs are governed
-server-side. A browser, portal or SDK request never selects a Fabric channel or
-smart contract.
-
-## Future invoice evidence — not MVP
-
-The reserved future family is `invoice-<sector>-<zone>`. Only an organization
-with a verified issuer sector may create and send an invoice there; the
-recipient may be a person or an organization from another sector. A
-cross-sector invoice is recorded once in the issuer's sector channel.
-Departments determine employee authorization and never create Fabric channels.
-Raw invoice content remains encrypted off ledger.
-
-This paragraph preserves the architectural decision only. The MVP agent must
-not implement invoice schemas, routes, user interfaces, CCAAS mappings or
-tests.
+Examples include `identity-eu`, `identity-na` and
+`qualification-education-eu`. A browser, portal or SDK request never selects a
+Fabric channel or smart contract.
 
 ## Evidence and CCAAS
 
@@ -85,13 +59,17 @@ a later increment.
 The neutral controller portal manages organizations, employees, departments,
 groups, reusable workforce authorizations and the controller-authorized
 employee identity, age-over and employer qualification-evidence workflows.
-Product professional portals specialize sector and role operations separately;
-the current increment does not add an antifraud workflow to a veterinarian or
-another sector-specific professional. Every portal reuses controlled components but
-never selects ledger channels or grants authority in browser state.
+The controller reuses controlled components but never selects ledger channels
+or grants authority in browser state.
 
 ## Implemented HTTP surface
 
+- `GET /v1/controller/workspace` reads authoritative organization, licence,
+  workforce, structure, authorization and notification state.
+- Controller department, group, invitation, acceptance, employee membership,
+  status and purge routes mutate only the authenticated organization and
+  return state that can be read after gateway reconstruction over the same
+  store.
 - `POST /v1/identity/evidence` records a canonical neutral identity-evidence
   statement and a privacy-minimized `identity-global` anchor.
 - `POST /v1/education/qualification-evidence` records an employer attestation
