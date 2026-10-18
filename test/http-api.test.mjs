@@ -3,6 +3,7 @@ import assert from 'node:assert/strict'
 import { once } from 'node:events'
 import { createServer } from 'node:http'
 import test from 'node:test'
+import { SyntheticConfidentialDocumentFixture } from 'antifraud-data-utils-ts'
 import {
   EducationQualificationGateway,
   InMemoryAddressedReferenceIndex,
@@ -68,7 +69,8 @@ test('completes the authenticated HTTP evidence and issuer-decision journey', as
   const recorded = await jsonRequest(`${baseUrl}/v1/education/qualification-evidence`, 'POST', 'employer-token', {
     evidenceId: 'evidence:http:001', subjectReference: 'person:opaque-http',
     issuer: { legalIdentifier: 'EU-UNIVERSITY-1', jurisdiction: 'ES' },
-    qualificationReference: 'qualification:opaque-http', documentCid: 'zQmHttpCid',
+    qualificationReference: 'qualification:opaque-http',
+    documentCid: SyntheticConfidentialDocumentFixture.attachment.contentId,
     encryptedClaims: 'jwe.http.payload',
   })
   assert.equal(recorded.response.status, 201)
@@ -91,10 +93,22 @@ test('completes the authenticated HTTP evidence and issuer-decision journey', as
   const injected = await jsonRequest(`${baseUrl}/v1/education/qualification-evidence`, 'POST', 'employer-token', {
     evidenceId: 'evidence:http:002', subjectReference: 'person:opaque-http-2',
     issuer: { legalIdentifier: 'EU-UNIVERSITY-1', jurisdiction: 'ES' },
-    qualificationReference: 'qualification:opaque-http-2', documentCid: 'zQmHttpCid2',
+    qualificationReference: 'qualification:opaque-http-2',
+    documentCid: SyntheticConfidentialDocumentFixture.attachment.contentId,
     encryptedClaims: 'jwe.http.payload.2', channel: 'identity-global',
   })
   assert.equal(injected.response.status, 400)
+
+  const invalidCid = await jsonRequest(`${baseUrl}/v1/education/qualification-evidence`, 'POST', 'employer-token', {
+    evidenceId: 'evidence:http:invalid-cid', subjectReference: 'person:opaque-http-3',
+    issuer: { legalIdentifier: 'EU-UNIVERSITY-1', jurisdiction: 'ES' },
+    qualificationReference: 'qualification:opaque-http-3', documentCid: 'z123',
+    encryptedClaims: 'jwe.http.payload.3',
+  })
+  assert.equal(invalidCid.response.status, 400)
+  assert.match(invalidCid.body.error, /CIDv1 raw with a SHA3-384 multihash/i)
+  const unchangedInbox = await jsonRequest(`${baseUrl}/v1/clearing-house/inbox`, 'GET', 'issuer-token')
+  assert.equal(unchangedInbox.body.items.length, 1)
 
   const identityEvidence = await jsonRequest(`${baseUrl}/v1/identity/evidence`, 'POST', 'identity-token', {
     operationId: 'identity-evidence:http:001', subjectReference: 'person:employee:http:001',
