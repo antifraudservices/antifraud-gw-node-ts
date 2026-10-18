@@ -127,6 +127,49 @@ export interface ConfidentialEvidenceVault {
   has(evidenceId: string): Promise<boolean>
 }
 
+type WaitFunction = (milliseconds: number) => Promise<void>
+
+type InMemoryLedgerOptions = Readonly<{
+  operationDelayMs?: number
+  wait?: WaitFunction
+}>
+
+export type GatewayNetworkProfile = Readonly<{
+  networkKind: 'test' | 'demo' | 'local-network' | 'test-network' | 'network'
+  adapter: 'memory' | 'fabric'
+  operationDelayMs: number
+}>
+
+export function resolveGatewayNetworkProfile(environment: NodeJS.ProcessEnv): GatewayNetworkProfile {
+  const demoMode = environment.ANTIFRAUD_DEMO_MODE === 'true'
+  if (demoMode) {
+    if (environment.ANTIFRAUD_DEPLOYMENT_STAGE !== 'staging') {
+      throw new Error('The in-memory demo profile is allowed in staging only.')
+    }
+    return { networkKind: 'demo', adapter: 'memory', operationDelayMs: 6000 }
+  }
+
+  const networkKind = environment.ANTIFRAUD_NETWORK_KIND ?? 'test'
+  if (networkKind === 'test') return { networkKind, adapter: 'memory', operationDelayMs: 0 }
+  if (networkKind === 'local-network' || networkKind === 'test-network' || networkKind === 'network') {
+    return { networkKind, adapter: 'fabric', operationDelayMs: 0 }
+  }
+  throw new Error(`Unsupported ANTIFRAUD_NETWORK_KIND: ${networkKind}`)
+}
+
+function defaultWait(milliseconds: number): Promise<void> {
+  return new Promise(resolve => setTimeout(resolve, milliseconds))
+}
+
+function ledgerDelay(options: InMemoryLedgerOptions): () => Promise<void> {
+  const milliseconds = options.operationDelayMs ?? 0
+  if (!Number.isSafeInteger(milliseconds) || milliseconds < 0) {
+    throw new TypeError('operationDelayMs must be a non-negative safe integer.')
+  }
+  const wait = options.wait ?? defaultWait
+  return milliseconds === 0 ? async () => undefined : async () => wait(milliseconds)
+}
+
 export class StaticIssuerDirectory implements IssuerDirectory {
   readonly #entries: readonly IssuerDirectoryEntry[]
 
@@ -165,9 +208,15 @@ export class StaticIssuerDirectory implements IssuerDirectory {
 
 export class InMemoryQualificationLedger implements QualificationLedger {
   readonly #records = new Map<string, QualificationAnchor>()
+  readonly #delay: () => Promise<void>
   #sequence = 0
 
+  constructor(options: InMemoryLedgerOptions = {}) {
+    this.#delay = ledgerDelay(options)
+  }
+
   async create(channel: string, anchor: QualificationAnchor): Promise<{ transactionId: string; anchor: QualificationAnchor }> {
+    await this.#delay()
     const key = ledgerKey(channel, anchor.evidenceId)
     if (this.#records.has(key)) throw new Error('Evidence already exists on the derived channel.')
     this.#records.set(key, structuredClone(anchor))
@@ -175,6 +224,7 @@ export class InMemoryQualificationLedger implements QualificationLedger {
   }
 
   async update(channel: string, evidenceId: string, update: Pick<QualificationAnchor, 'status' | 'updatedAt' | 'issuerProofReference'>): Promise<{ transactionId: string; anchor: QualificationAnchor }> {
+    await this.#delay()
     const key = ledgerKey(channel, evidenceId)
     const current = this.#records.get(key)
     if (!current) throw new Error('Evidence was not found on the derived channel.')
@@ -184,6 +234,7 @@ export class InMemoryQualificationLedger implements QualificationLedger {
   }
 
   async read(channel: string, evidenceId: string): Promise<QualificationAnchor | undefined> {
+    await this.#delay()
     const anchor = this.#records.get(ledgerKey(channel, evidenceId))
     return anchor ? structuredClone(anchor) : undefined
   }
@@ -196,9 +247,15 @@ export class InMemoryQualificationLedger implements QualificationLedger {
 
 export class InMemoryIdentityEvidenceLedger implements IdentityEvidenceLedger {
   readonly #records = new Map<string, IdentityEvidenceAnchor>()
+  readonly #delay: () => Promise<void>
   #sequence = 0
 
+  constructor(options: InMemoryLedgerOptions = {}) {
+    this.#delay = ledgerDelay(options)
+  }
+
   async create(channel: 'identity-global', anchor: IdentityEvidenceAnchor): Promise<{ transactionId: string; anchor: IdentityEvidenceAnchor }> {
+    await this.#delay()
     const key = ledgerKey(channel, anchor.evidenceId)
     if (this.#records.has(key)) throw new Error('Identity evidence already exists.')
     this.#records.set(key, structuredClone(anchor))
@@ -210,6 +267,7 @@ export class InMemoryIdentityEvidenceLedger implements IdentityEvidenceLedger {
   }
 
   async read(channel: 'identity-global', evidenceId: string): Promise<IdentityEvidenceAnchor | undefined> {
+    await this.#delay()
     const anchor = this.#records.get(ledgerKey(channel, evidenceId))
     return anchor ? structuredClone(anchor) : undefined
   }

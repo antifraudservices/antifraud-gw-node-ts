@@ -10,7 +10,14 @@ import {
   OrganizationControllerGateway,
   StaticIssuerDirectory,
   createAntifraudGatewayHttpHandler,
+  resolveGatewayNetworkProfile,
 } from '../dist/index.js'
+
+const networkProfile = resolveGatewayNetworkProfile(process.env)
+if (networkProfile.adapter !== 'memory') {
+  throw new Error(`${networkProfile.networkKind} requires the real Fabric runtime; the demo server cannot substitute for it.`)
+}
+const ledgerOptions = { operationDelayMs: networkProfile.operationDelayMs }
 
 const token = 'local-controller-bff-token'
 const actor = Object.freeze({
@@ -35,8 +42,8 @@ const actor = Object.freeze({
 })
 
 const gateway = new EducationQualificationGateway({
-  ledger: new InMemoryQualificationLedger(),
-  identityLedger: new InMemoryIdentityEvidenceLedger(),
+  ledger: new InMemoryQualificationLedger(ledgerOptions),
+  identityLedger: new InMemoryIdentityEvidenceLedger(ledgerOptions),
   index: new InMemoryAddressedReferenceIndex(),
   directory: new StaticIssuerDirectory([{
     legalIdentifier: 'EXAMPLE-UNIVERSITY', jurisdiction: 'ES',
@@ -91,7 +98,9 @@ const server = createServer(createAntifraudGatewayHttpHandler({
   resolveActor: async credential => credential === token ? actor : undefined,
 }))
 const port = Number.parseInt(process.env.PORT ?? '3700', 10)
-server.listen(port, '127.0.0.1', () => process.stdout.write(`local antifraud gateway listening on ${port}\n`))
+server.listen(port, '127.0.0.1', () => process.stdout.write(
+  `antifraud ${networkProfile.networkKind} gateway listening on ${port}; ledger delay ${networkProfile.operationDelayMs}ms\n`,
+))
 for (const signal of ['SIGINT', 'SIGTERM']) {
   process.on(signal, () => server.close(() => process.exit(0)))
 }
