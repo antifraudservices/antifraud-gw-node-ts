@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Add explicit network-profile selection: immediate memory for automated tests,
+  a fixed six-second memory simulation only for staging demos, and mandatory
+  real Fabric for `local-network`, `test-network` and `network`.
+- Run gateway test files sequentially on local developer hardware.
+
 - Replace optional-field issuer inference with explicit
   `participant-resolved`, `identity-resolved` and `not-resolved` outcomes.
   Reject incomplete participant directory bindings and preserve the

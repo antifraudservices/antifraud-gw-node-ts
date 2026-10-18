@@ -12,8 +12,10 @@ server-resolved workforce actor, records neutral employee identity evidence
 (including age-over predicates), records education qualification evidence,
 creates an addressed issuer inbox, accepts issuer decisions and maintains an
 authenticated organization-controller workspace. Unit and real HTTP
-integration tests cover these paths. No Fabric adapter, deployment
-profile, local-network transaction or production readiness is claimed yet. A
+integration tests cover these paths. An explicit staging demo profile uses the
+same API with a fixed six-second delay for each simulated ledger operation. No
+real Fabric adapter, local-network transaction or production readiness is
+claimed yet. A
 superseded historical gateway is not a compatibility baseline.
 
 Before implementation, compare the current shared gateway implementation with
@@ -48,7 +50,11 @@ Fabric channel or smart contract.
 
 For the MVP, `evidence-sc` must be evaluated for `identity-global` identity
 evidence and for the approved `qualification-education-<zone>` channels.
-The current implementation uses in-memory adapters only. Fabric keeps
+The current implementation uses in-memory adapters only. Automated `test`
+operations are immediate. The explicitly enabled staging demo uses the same
+adapters with a fixed 6000 ms delay. `local-network`, `test-network` and
+`network` resolve to a real-Fabric requirement and are rejected by the demo
+server. Fabric keeps
 independent state in each channel, so peer membership, lifecycle approval,
 commitment, endorsement policy and authoritative readback remain required
 before any local-network claim. Future evidence domains repeat that process in
@@ -85,13 +91,27 @@ or grants authority in browser state.
 - `POST /v1/clearing-house/evidence/:id/decision` records an addressed issuer
   confirmation, rejection or revocation.
 
-These routes are currently proven with in-memory adapters. They are not Fabric
-or Test Network evidence.
+These routes are currently proven with in-memory adapters. A staging demo can
+exercise them with the six-second simulation, but it is not Fabric or Test
+Network evidence.
 
 `GET /healthz` is an unauthenticated liveness check and returns no tenant,
-actor or ledger state. `test/local-controller-gateway-server.mjs` is a
-synthetic local-only fixture used by the controller Playwright journey; it is
-not a deployment entry point.
+actor or ledger state. `test/local-controller-gateway-server.mjs` is the
+synthetic fixture used by controller Playwright and the temporary staging-demo
+entry point. It fails closed when configured for `local-network`, Test Network
+or production.
+
+Run that staging demo only with:
+
+```bash
+ANTIFRAUD_DEPLOYMENT_STAGE=staging \
+ANTIFRAUD_DEMO_MODE=true \
+npm run start:demo
+```
+
+The interactive local controller portal must instead use the real Fabric
+server selected by `ANTIFRAUD_NETWORK_KIND=local-network` after its adapter and
+restart-readback gate are green.
 
 ## Implementation entry point
 

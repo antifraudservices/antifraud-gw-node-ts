@@ -9,7 +9,8 @@
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test": "npm run build && node --test test/*.test.mjs",
+    "test": "npm run build && node --test --test-concurrency=1 test/*.test.mjs",
+    "start:demo": "npm run build && node test/local-controller-gateway-server.mjs",
     "prepublishOnly": "node -e \"throw new Error('Deploy this gateway as an immutable service image; do not publish it to npm.')\""
   },
   "engines": {
