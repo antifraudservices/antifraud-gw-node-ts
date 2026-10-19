@@ -137,6 +137,14 @@ finally local-network ledger write plus authoritative readback. A mock,
 fixture, screenshot, HTTP success or configured channel name is not ledger
 proof.
 
+Do not publish a shared package or service image after isolated package tests.
+First prove the complete affected local application journey and the real
+local-network ledger write plus authoritative readback using immutable
+`npm pack` overlays installed `--no-save`. Then make one cumulative release
+from the lowest changed package upward, pin exact registry versions, and only
+then promote Test Network. The initial one-orderer Test Network is deliberately
+non-HA and must never be described as production resilience.
+
 The local neutral controller portal acceptance journey must cover employee
 identity evidence and age-over predicates as well as participating and
 non-participating issuers, verified wallet evidence, signed outbox delivery,

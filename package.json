@@ -10,7 +10,9 @@
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "npm run build && node --test --test-concurrency=1 test/*.test.mjs",
-    "start:demo": "npm run build && node test/local-controller-gateway-server.mjs",
+    "test:local-network": "npm run build && node --test --test-concurrency=1 test/*.local-network.mjs",
+    "start": "node dist/server.js",
+    "start:demo": "npm run build && node dist/server.js",
     "prepublishOnly": "node -e \"throw new Error('Deploy this gateway as an immutable service image; do not publish it to npm.')\""
   },
   "engines": {
@@ -22,6 +24,10 @@
     "typescript": "^5.9.3"
   },
   "dependencies": {
-    "antifraud-data-utils-ts": "0.1.4"
+    "@google-cloud/firestore": "8.7.1",
+    "@grpc/grpc-js": "^1.14.6",
+    "@hyperledger/fabric-gateway": "^1.13.0",
+    "antifraud-data-utils-ts": "0.1.8",
+    "antifraud-sdk-node-ts": "0.2.4"
   }
 }

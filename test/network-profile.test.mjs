@@ -1,4 +1,4 @@
-// Flow contract: automated tests use immediate in-memory ledgers, an explicitly configured staging demo uses the same gateway contract with a six-second simulated Fabric operation delay, and every local-network, Test Network or production profile requires the real Fabric adapter. No public caller may select this profile.
+// Flow contract: automated tests use immediate in-memory ledgers, an explicit local or Beta Demo uses the same gateway contract with a six-second virtual-ledger delay, and every local-network, Test Network or Production profile requires the real Fabric adapter. No public caller may select this profile.
 import assert from 'node:assert/strict'
 import test from 'node:test'
 
@@ -33,15 +33,17 @@ const identityAnchor = {
   recordedAt: '2026-10-18T00:00:00.000Z',
 }
 
-test('selects a six-second in-memory Fabric simulation only for an explicit staging demo', () => {
-  assert.deepEqual(resolveGatewayNetworkProfile({
-    ANTIFRAUD_DEPLOYMENT_STAGE: 'staging',
-    ANTIFRAUD_DEMO_MODE: 'true',
-  }), {
-    networkKind: 'demo',
-    adapter: 'memory',
-    operationDelayMs: 6000,
-  })
+test('selects a six-second virtual ledger for explicit local and Beta Demo surfaces', () => {
+  for (const deploymentStage of ['local', 'beta', 'staging']) {
+    assert.deepEqual(resolveGatewayNetworkProfile({
+      ANTIFRAUD_DEPLOYMENT_STAGE: deploymentStage,
+      ANTIFRAUD_DEMO_MODE: 'true',
+    }), {
+      networkKind: 'demo',
+      adapter: 'memory',
+      operationDelayMs: 6000,
+    })
+  }
 
   assert.deepEqual(resolveGatewayNetworkProfile({ ANTIFRAUD_NETWORK_KIND: 'local-network' }), {
     networkKind: 'local-network', adapter: 'fabric', operationDelayMs: 0,
@@ -53,8 +55,8 @@ test('selects a six-second in-memory Fabric simulation only for an explicit stag
     networkKind: 'network', adapter: 'fabric', operationDelayMs: 0,
   })
   assert.throws(
-    () => resolveGatewayNetworkProfile({ ANTIFRAUD_DEPLOYMENT_STAGE: 'network', ANTIFRAUD_DEMO_MODE: 'true' }),
-    /staging only/i,
+    () => resolveGatewayNetworkProfile({ ANTIFRAUD_DEPLOYMENT_STAGE: 'production', ANTIFRAUD_DEMO_MODE: 'true' }),
+    /local, beta or staging only/i,
   )
 })
 
