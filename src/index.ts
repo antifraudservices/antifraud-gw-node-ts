@@ -152,7 +152,8 @@ export interface AddressedReferenceIndex {
 }
 
 export interface ConfidentialEvidenceVault {
-  put(evidenceId: string, encryptedClaims: string): Promise<void>
+  put(evidenceId: string, confidentialClaims: Readonly<Record<string, unknown>>): Promise<void>
+  get(evidenceId: string): Promise<Readonly<Record<string, unknown>> | undefined>
   has(evidenceId: string): Promise<boolean>
 }
 
@@ -336,15 +337,20 @@ export class InMemoryAddressedReferenceIndex implements AddressedReferenceIndex 
 }
 
 export class InMemoryConfidentialEvidenceVault implements ConfidentialEvidenceVault {
-  readonly #ciphertexts = new Map<string, string>()
+  readonly #claims = new Map<string, Readonly<Record<string, unknown>>>()
 
-  async put(evidenceId: string, encryptedClaims: string): Promise<void> {
-    if (this.#ciphertexts.has(evidenceId)) throw new Error('Confidential evidence already exists.')
-    this.#ciphertexts.set(evidenceId, encryptedClaims)
+  async put(evidenceId: string, confidentialClaims: Readonly<Record<string, unknown>>): Promise<void> {
+    if (this.#claims.has(evidenceId)) throw new Error('Confidential evidence already exists.')
+    this.#claims.set(evidenceId, structuredClone(confidentialClaims))
+  }
+
+  async get(evidenceId: string): Promise<Readonly<Record<string, unknown>> | undefined> {
+    const claims = this.#claims.get(evidenceId)
+    return claims ? structuredClone(claims) : undefined
   }
 
   async has(evidenceId: string): Promise<boolean> {
-    return this.#ciphertexts.has(evidenceId)
+    return this.#claims.has(evidenceId)
   }
 }
 
@@ -355,7 +361,8 @@ type RecordEmployerEvidenceInput = Readonly<{
   issuer: { legalIdentifier: string; jurisdiction: string }
   qualificationReference: string
   documentCid: string
-  encryptedClaims: string
+  confidentialClaims?: Readonly<Record<string, unknown>>
+  encryptedClaims?: string
   channel?: unknown
   zone?: unknown
   smartContract?: unknown
@@ -367,6 +374,17 @@ type RecordIssuerDecisionInput = Readonly<{
   decision: 'confirmed' | 'rejected' | 'revoked'
   issuerProofReference: string
 }>
+
+function normalizeConfidentialClaims(input: Pick<RecordEmployerEvidenceInput, 'confidentialClaims' | 'encryptedClaims'>): Readonly<Record<string, unknown>> {
+  if (input.confidentialClaims && typeof input.confidentialClaims === 'object' && !Array.isArray(input.confidentialClaims)) {
+    if (input.encryptedClaims !== undefined) throw new Error('Supply confidentialClaims without the legacy encryptedClaims field.')
+    return structuredClone(input.confidentialClaims)
+  }
+  if (typeof input.encryptedClaims === 'string' && input.encryptedClaims.trim()) {
+    return Object.freeze({legacyEncryptedClaims: input.encryptedClaims})
+  }
+  throw new Error('Confidential claims are required.')
+}
 
 type RecordIdentityEvidenceInput = Readonly<{
   actor: WorkforceActor
@@ -420,7 +438,7 @@ export class EducationQualificationGateway {
     requireOpaqueReference(input.qualificationReference, 'qualificationReference')
     requireOpaqueReference(input.documentCid, 'documentCid')
     assertSha3_384EvidenceContentId(input.documentCid)
-    if (!input.encryptedClaims.trim()) throw new Error('Encrypted claims are required.')
+    const confidentialClaims = normalizeConfidentialClaims(input)
 
     const jurisdiction = normalizeJurisdiction(input.issuer.jurisdiction)
     const channel = `qualification-education-${zoneForJurisdiction(jurisdiction)}`
@@ -452,7 +470,7 @@ export class EducationQualificationGateway {
       updatedAt: now,
     }
 
-    await this.#vault.put(input.evidenceId, input.encryptedClaims)
+    await this.#vault.put(input.evidenceId, confidentialClaims)
     const recorded = await this.#ledger.create(channel, anchor)
     await this.#index.put({
       destinationOrganizationReference: issuerOrganizationReference,
@@ -511,7 +529,7 @@ export class EducationQualificationGateway {
       employerProofReference: `proof:employer:${statement.operationId}`,
       recordedAt,
     }
-    await this.#vault.put(statement.operationId, input.encryptedClaims)
+    await this.#vault.put(statement.operationId, {legacyEncryptedClaims: input.encryptedClaims})
     const recorded = await this.#identityLedger.create('identity-global', anchor)
     return { channel: 'identity-global', transactionId: recorded.transactionId, anchor: recorded.anchor }
   }
@@ -519,6 +537,20 @@ export class EducationQualificationGateway {
   async listIssuerInbox(input: { actor: WorkforceActor }): Promise<readonly AddressedReference[]> {
     requireActor(input.actor, 'qualification-inbox:list')
     return this.#index.listForDestination(input.actor.organizationReference)
+  }
+
+  async readIssuerEvidence(input: { actor: WorkforceActor; evidenceLocator: string }): Promise<Readonly<{
+    evidenceLocator: string
+    confidentialClaims: Readonly<Record<string, unknown>>
+  }>> {
+    requireActor(input.actor, 'qualification-inbox:list')
+    const addressed = await this.#index.findByEvidenceLocator(input.evidenceLocator)
+    if (!addressed || addressed.destinationOrganizationReference !== input.actor.organizationReference) {
+      throw new Error('Evidence is not addressed to the authenticated organization.')
+    }
+    const confidentialClaims = await this.#vault.get(input.evidenceLocator)
+    if (!confidentialClaims) throw new Error('Confidential evidence was not found.')
+    return Object.freeze({evidenceLocator: input.evidenceLocator, confidentialClaims})
   }
 
   async recordIssuerDecision(input: RecordIssuerDecisionInput): Promise<{
@@ -770,6 +802,18 @@ async function handleGatewayRequest(
     if (request.method === 'GET' && url.pathname === '/v1/clearing-house/inbox') {
       const items = await input.gateway.listIssuerInbox({ actor })
       writeJson(response, 200, { items })
+      return
+    }
+
+    const evidenceDetailMatch = request.method === 'GET'
+      ? url.pathname.match(/^\/v1\/clearing-house\/evidence\/([^/]+)$/u)
+      : undefined
+    if (evidenceDetailMatch) {
+      const result = await input.gateway.readIssuerEvidence({
+        actor,
+        evidenceLocator: decodeURIComponent(evidenceDetailMatch[1]),
+      })
+      writeJson(response, 200, result)
       return
     }
 

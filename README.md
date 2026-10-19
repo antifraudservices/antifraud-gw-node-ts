@@ -95,6 +95,9 @@ or grants authority in browser state.
   `awaiting-issuer-onboarding`, and the third fails closed before persistence.
 - `GET /v1/clearing-house/inbox` lists only references addressed to the
   authenticated issuer organization.
+- `GET /v1/clearing-house/evidence/:id` opens the confidential employer
+  attestation only for that addressed issuer. It does not copy classification
+  values into the inbox index or Fabric anchor.
 - `POST /v1/clearing-house/evidence/:id/decision` records an addressed issuer
   confirmation, rejection or revocation.
 

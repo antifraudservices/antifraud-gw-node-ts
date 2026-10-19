@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- Add addressed-issuer confidential evidence readback. The federated inbox and
+  ledger anchor remain privacy-minimized, while the exact addressed issuer can
+  open the employer attestation and canonical qualification classification.
+  Firestore persists only managed-wallet-sealed claims; another organization
+  fails closed.
+
 - Expose `/health` beside the local `/healthz` probe so Cloud Run public
   verification reaches the service rather than a reserved frontend path.
 
