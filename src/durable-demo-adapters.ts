@@ -136,10 +136,32 @@ export class GatewayDocumentAddressedReferenceIndex implements AddressedReferenc
 }
 
 export class GatewayDocumentConfidentialEvidenceVault implements ConfidentialEvidenceVault {
-  constructor(private readonly documents: NamespacedGatewayDocumentStore) {}
+  constructor(
+    private readonly documents: NamespacedGatewayDocumentStore,
+    private readonly wallet: Readonly<{
+      protectArtifact(owner: string, bytes: Uint8Array): Promise<string>
+      unprotectArtifact(owner: string, sealed: string): Promise<Uint8Array>
+    }>,
+    private readonly walletOwner: string,
+  ) {}
 
-  put(evidenceId: string, encryptedClaims: string): Promise<void> {
-    return this.documents.create('confidential_evidence', key(evidenceId), {encryptedClaims})
+  async put(evidenceId: string, confidentialClaims: Readonly<Record<string, unknown>>): Promise<void> {
+    const sealedClaims = await this.wallet.protectArtifact(
+      this.walletOwner,
+      Buffer.from(JSON.stringify(confidentialClaims), 'utf8'),
+    )
+    await this.documents.create('confidential_evidence', key(evidenceId), {sealedClaims})
+  }
+
+  async get(evidenceId: string): Promise<Readonly<Record<string, unknown>> | undefined> {
+    const stored = await this.documents.read('confidential_evidence', key(evidenceId)) as {sealedClaims?: string} | undefined
+    if (!stored?.sealedClaims) return undefined
+    const bytes = await this.wallet.unprotectArtifact(this.walletOwner, stored.sealedClaims)
+    const parsed: unknown = JSON.parse(Buffer.from(bytes).toString('utf8'))
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+      throw new Error('Confidential evidence payload is not a claims object.')
+    }
+    return Object.freeze(structuredClone(parsed as Record<string, unknown>))
   }
 
   async has(evidenceId: string): Promise<boolean> {

@@ -30,7 +30,11 @@ test('reloads virtual-ledger anchors, routing, vault and controller state after 
   const qualification = new GatewayDocumentQualificationLedger(documents)
   const identity = new GatewayDocumentIdentityEvidenceLedger(documents)
   const index = new GatewayDocumentAddressedReferenceIndex(documents)
-  const vault = new GatewayDocumentConfidentialEvidenceVault(documents)
+  const wallet = {
+    async protectArtifact(_owner, bytes) { return `sealed:${Buffer.from(bytes).toString('base64url')}` },
+    async unprotectArtifact(_owner, sealed) { return Buffer.from(sealed.slice(7), 'base64url') },
+  }
+  const vault = new GatewayDocumentConfidentialEvidenceVault(documents, wallet, 'host:demo')
   const controller = new OrganizationControllerGateway({
     store: new GatewayDocumentControllerAdministrationStore(documents),
   })
@@ -59,7 +63,8 @@ test('reloads virtual-ledger anchors, routing, vault and controller state after 
   await qualification.create('qualification-education-na', qualificationAnchor)
   await identity.create('identity-global', identityAnchor)
   await index.put(addressed, {channel: 'qualification-education-na'})
-  await vault.put('evidence:one', 'jwe.ciphertext')
+  const confidentialClaims = {qualification: {classification: {system: 'urn:example:qualification', code: 'SECRET-CODE'}}}
+  await vault.put('evidence:one', confidentialClaims)
   await controller.createDepartment({actor, name: 'Evidence review'})
 
   const restartedDocuments = new NamespacedGatewayDocumentStore(backend, 'antifraud_demo_')
@@ -78,7 +83,12 @@ test('reloads virtual-ledger anchors, routing, vault and controller state after 
       .listForDestination('organization:issuer'),
     [addressed],
   )
-  assert.equal(await new GatewayDocumentConfidentialEvidenceVault(restartedDocuments).has('evidence:one'), true)
+  const evidenceKey = Buffer.from('evidence:one').toString('base64url')
+  const storedEvidence = await restartedDocuments.read('confidential_evidence', evidenceKey)
+  assert.equal(JSON.stringify(storedEvidence).includes('SECRET-CODE'), false)
+  const restartedVault = new GatewayDocumentConfidentialEvidenceVault(restartedDocuments, wallet, 'host:demo')
+  assert.equal(await restartedVault.has('evidence:one'), true)
+  assert.deepEqual(await restartedVault.get('evidence:one'), confidentialClaims)
   const restartedController = new OrganizationControllerGateway({
     store: new GatewayDocumentControllerAdministrationStore(restartedDocuments),
   })

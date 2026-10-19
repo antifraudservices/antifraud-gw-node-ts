@@ -132,11 +132,22 @@ export function createGatewayDemoRuntime(
     : new InMemoryGatewayDocumentBackend())
   const documents = new NamespacedGatewayDocumentStore(backend, persistenceProfile.collectionPrefix)
   const ledgerOptions = { operationDelayMs: profile.operationDelayMs, wait: options.wait }
+  const managedWallet = new NodeManagedWallet()
+  const walletProtector = {
+    async protectArtifact(owner: string, bytes: Uint8Array) {
+      await managedWallet.provision(owner, walletSeed ? {seedMaterial: walletSeed} : {})
+      return managedWallet.protectArtifactBytes(owner, bytes)
+    },
+    async unprotectArtifact(owner: string, sealed: string) {
+      await managedWallet.provision(owner, walletSeed ? {seedMaterial: walletSeed} : {})
+      return managedWallet.unprotectArtifactBytes(owner, sealed)
+    },
+  }
   const gateway = new EducationQualificationGateway({
     ledger: new GatewayDocumentQualificationLedger(documents, ledgerOptions),
     identityLedger: new GatewayDocumentIdentityEvidenceLedger(documents, ledgerOptions),
     index: new GatewayDocumentAddressedReferenceIndex(documents),
-    vault: new GatewayDocumentConfidentialEvidenceVault(documents),
+    vault: new GatewayDocumentConfidentialEvidenceVault(documents, walletProtector, 'host:antifraud-demo:confidential-evidence'),
     directory: new StaticIssuerDirectory([
       {
         legalIdentifier: 'DEMO-ISSUER',
@@ -158,22 +169,12 @@ export function createGatewayDemoRuntime(
   const controller = new OrganizationControllerGateway({
     store: new GatewayDocumentControllerAdministrationStore(documents),
   })
-  const managedWallet = new NodeManagedWallet()
   const artifacts = new ConfidentialArtifactStore({
     objects: documentBackendName === 'memory' && !options.documentBackend
       ? new InMemoryGatewayObjectBackend()
       : new GatewayDocumentObjectBackend(documents),
     objectPrefix: `${persistenceProfile.collectionPrefix}attachments/`,
-    wallet: {
-      async protectArtifact(owner, bytes) {
-        await managedWallet.provision(owner, walletSeed ? {seedMaterial: walletSeed} : {})
-        return managedWallet.protectArtifactBytes(owner, bytes)
-      },
-      async unprotectArtifact(owner, sealed) {
-        await managedWallet.provision(owner, walletSeed ? {seedMaterial: walletSeed} : {})
-        return managedWallet.unprotectArtifactBytes(owner, sealed)
-      },
-    },
+    wallet: walletProtector,
   })
   const publications = new SocialPublicationDemoGateway({
     store: new GatewayDocumentSocialPublicationStore(documents),

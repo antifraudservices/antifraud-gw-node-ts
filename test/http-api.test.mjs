@@ -79,7 +79,10 @@ test('completes the authenticated HTTP evidence and issuer-decision journey', as
     issuer: { legalIdentifier: 'EU-UNIVERSITY-1', jurisdiction: 'ES' },
     qualificationReference: 'qualification:opaque-http',
     documentCid: SyntheticConfidentialDocumentFixture.attachment.contentId,
-    encryptedClaims: 'jwe.http.payload',
+    confidentialClaims: {
+      qualification: {classification: {system: 'urn:example:qualification', version: '2026', code: 'BACHELOR-001'}},
+      assertionKind: 'employer-attestation',
+    },
   })
   assert.equal(recorded.response.status, 201)
   assert.equal(recorded.body.channel, 'qualification-education-eu')
@@ -89,6 +92,15 @@ test('completes the authenticated HTTP evidence and issuer-decision journey', as
   assert.equal(inbox.response.status, 200)
   assert.equal(inbox.body.items.length, 1)
   assert.equal(inbox.body.items[0].evidenceLocator, 'evidence:http:001')
+
+  const detail = await jsonRequest(`${baseUrl}/v1/clearing-house/evidence/evidence%3Ahttp%3A001`, 'GET', 'issuer-token')
+  assert.equal(detail.response.status, 200)
+  assert.deepEqual(detail.body.confidentialClaims.qualification.classification, {
+    system: 'urn:example:qualification', version: '2026', code: 'BACHELOR-001',
+  })
+  assert.equal(detail.body.confidentialClaims.assertionKind, 'employer-attestation')
+  const wrongOrganizationDetail = await jsonRequest(`${baseUrl}/v1/clearing-house/evidence/evidence%3Ahttp%3A001`, 'GET', 'employer-token')
+  assert.equal(wrongOrganizationDetail.response.status, 400)
 
   const decided = await jsonRequest(`${baseUrl}/v1/clearing-house/evidence/evidence%3Ahttp%3A001/decision`, 'POST', 'issuer-token', {
     decision: 'confirmed', issuerProofReference: 'proof:issuer:http:001',

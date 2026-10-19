@@ -66,7 +66,18 @@ test('derives the education channel and completes participant issuer confirmatio
     evidenceId: 'evidence:001', subjectReference: 'person:opaque-subject',
     issuer: { legalIdentifier: 'EU-UNIVERSITY-1', jurisdiction: 'ES' },
     qualificationReference: 'qualification:opaque-1', documentCid: validDocumentCid,
-    encryptedClaims: 'jwe.compact.payload',
+    confidentialClaims: {
+      qualification: {
+        classification: {
+          system: 'urn:antifraud:terminology:synthetic:education-qualification',
+          version: 'demo-2026-10',
+          uri: 'urn:antifraud:qualification:synthetic-bachelor-001',
+          code: 'synthetic-bachelor-001',
+          display: 'Synthetic bachelor-level qualification',
+        },
+      },
+      assertionKind: 'employer-attestation',
+    },
   })
 
   assert.equal(result.channel, 'qualification-education-eu')
@@ -80,6 +91,29 @@ test('derives the education channel and completes participant issuer confirmatio
   assert.equal(inbox[0].evidenceLocator, 'evidence:001')
   assert.equal(JSON.stringify(inbox).includes('EU-UNIVERSITY-1'), false)
   assert.equal(JSON.stringify(inbox).includes('opaque-subject'), false)
+
+  assert.deepEqual(await gateway.readIssuerEvidence({
+    actor: issuerActor,
+    evidenceLocator: 'evidence:001',
+  }), {
+    evidenceLocator: 'evidence:001',
+    confidentialClaims: {
+      qualification: {
+        classification: {
+          system: 'urn:antifraud:terminology:synthetic:education-qualification',
+          version: 'demo-2026-10',
+          uri: 'urn:antifraud:qualification:synthetic-bachelor-001',
+          code: 'synthetic-bachelor-001',
+          display: 'Synthetic bachelor-level qualification',
+        },
+      },
+      assertionKind: 'employer-attestation',
+    },
+  })
+  await assert.rejects(() => gateway.readIssuerEvidence({
+    actor: {...issuerActor, organizationReference: 'org:other'},
+    evidenceLocator: 'evidence:001',
+  }), /addressed to the authenticated organization/i)
 
   const decision = await gateway.recordIssuerDecision({
     actor: issuerActor, evidenceLocator: 'evidence:001', decision: 'confirmed', issuerProofReference: 'proof:issuer:001',
