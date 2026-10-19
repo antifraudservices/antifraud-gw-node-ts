@@ -2,6 +2,39 @@
 
 ## Unreleased
 
+- Expose `/health` beside the local `/healthz` probe so Cloud Run public
+  verification reaches the service rather than a reserved frontend path.
+
+- Add Firestore-backed, environment-prefixed Demo persistence for virtual
+  ledger anchors, addressed references, vault state, controller workspaces and
+  sealed JWE attachments. A Secret Manager seed reconstructs managed-wallet
+  custody after process restart without exposing private keys to portals.
+- Add the authenticated social-publication route and durable readback. The
+  Gateway recomputes the public manifest binding, accepts only the canonical
+  verified ML-DSA-65 proof and labels the six-second ledger receipt as the
+  in-memory Fabric Demo adapter.
+- Add authenticated confidential-artifact HTTP storage and retrieval. The
+  Gateway verifies DIDComm bytes against the Schema.org MediaObject size,
+  SHA3-384 digest and CID, seals bytes at rest through the Node managed wallet,
+  and returns them only to the owning organization with `no-store` responses.
+- Wire the disposable Demo runtime and local browser fixture to namespaced
+  attachment storage without introducing FHIR `DocumentReference`.
+
+- Add official Fabric Gateway adapters for privacy-minimized qualification and
+  identity-evidence anchors. The unskipped local-network gate now writes and
+  reads `identity-global`, `qualification-education-eu` and
+  `qualification-education-na`, preserves server-owned channel/chaincode
+  routing and returns real Fabric transaction IDs.
+
+- Add the deployable Demo HTTP process and reproducible non-root Node 24
+  container for Cloud Run. Bind four portal BFF credentials to fixed
+  server-owned Demo actors, keep the six-second virtual-ledger receipt explicit,
+  permit the Demo profile only on local, Beta or staging surfaces, and keep
+  Production disabled.
+- Add disposable environment-namespaced Demo persistence contracts and
+  wallet-sealed confidential artifact storage. Only the Demo prefix can be
+  administratively purged.
+
 - Pin `antifraud-data-utils-ts@0.1.4` so gateway tests and future delivery
   managers consume the released Schema.org confidential-document and DIDComm
   inline/protected-link attachment contracts.

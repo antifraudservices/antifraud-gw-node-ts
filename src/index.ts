@@ -1,14 +1,29 @@
 import type { IncomingMessage, RequestListener, ServerResponse } from 'node:http'
+import { createHash } from 'node:crypto'
 import type { OrganizationControllerGateway } from './controller-administration.js'
 import {
   IdentityAttestationCapability,
   assertSha3_384EvidenceContentId,
+  buildSchemaOrgConfidentialDocumentGraph,
   defineAuthorizedWorkforceIdentityEvidenceStatement,
+  type DidCommInlineBinaryAttachment,
   type IdentityAttestationCapabilityValue,
   type IdentityEvidenceInput,
   type IdentityEvidenceTarget,
+  type SchemaOrgConfidentialDocumentGraphInput,
+  type ManagedSignatureProof,
+  type SocialPublicationContent,
 } from 'antifraud-data-utils-ts'
+import type {SocialPublicationDemoGateway} from './social-publication-demo.js'
 export * from './controller-administration.js'
+export * from './demo-persistence.js'
+export * from './demo-runtime.js'
+export * from './demo-server.js'
+export * from './durable-demo-adapters.js'
+export * from './fabric-qualification-ledger.js'
+export * from './fabric-gateway-connection.js'
+export * from './fabric-identity-evidence-ledger.js'
+export * from './social-publication-demo.js'
 
 export type EvidenceStatus =
   | 'pending-issuer-confirmation'
@@ -114,6 +129,20 @@ export interface IdentityEvidenceLedger {
   read(channel: 'identity-global', evidenceId: string): Promise<IdentityEvidenceAnchor | undefined>
 }
 
+export interface ConfidentialArtifactRepository {
+  put(input: Readonly<{
+    artifactId: string
+    organizationReference: string
+    mediaType: string
+    fileName: string
+    bytes: Uint8Array
+  }>): Promise<Readonly<{artifactId: string; objectName: string; byteCount: number}>>
+  get(
+    artifactId: string,
+    authorizedOrganizationReference: string,
+  ): Promise<Readonly<{mediaType: string; fileName: string; bytes: Uint8Array}>>
+}
+
 export interface AddressedReferenceIndex {
   put(reference: AddressedReference, routing: { channel: string }): Promise<void>
   listForDestination(destinationOrganizationReference: string): Promise<readonly AddressedReference[]>
@@ -143,8 +172,9 @@ export type GatewayNetworkProfile = Readonly<{
 export function resolveGatewayNetworkProfile(environment: NodeJS.ProcessEnv): GatewayNetworkProfile {
   const demoMode = environment.ANTIFRAUD_DEMO_MODE === 'true'
   if (demoMode) {
-    if (environment.ANTIFRAUD_DEPLOYMENT_STAGE !== 'staging') {
-      throw new Error('The in-memory demo profile is allowed in staging only.')
+    const deploymentStage = environment.ANTIFRAUD_DEPLOYMENT_STAGE ?? 'local'
+    if (!['local', 'beta', 'staging'].includes(deploymentStage)) {
+      throw new Error('The in-memory demo profile is allowed for local, Beta or staging only.')
     }
     return { networkKind: 'demo', adapter: 'memory', operationDelayMs: 6000 }
   }
@@ -525,6 +555,8 @@ export class EducationQualificationGateway {
 export function createAntifraudGatewayHttpHandler(input: {
   gateway: EducationQualificationGateway
   controller?: OrganizationControllerGateway
+  artifacts?: ConfidentialArtifactRepository
+  publications?: SocialPublicationDemoGateway
   resolveActor: (bearerCredential: string) => Promise<WorkforceActor | undefined>
 }): RequestListener {
   return (request, response) => {
@@ -536,6 +568,8 @@ async function handleGatewayRequest(
   input: {
     gateway: EducationQualificationGateway
     controller?: OrganizationControllerGateway
+    artifacts?: ConfidentialArtifactRepository
+    publications?: SocialPublicationDemoGateway
     resolveActor: (bearerCredential: string) => Promise<WorkforceActor | undefined>
   },
   request: IncomingMessage,
@@ -543,7 +577,7 @@ async function handleGatewayRequest(
 ): Promise<void> {
   try {
     const url = new URL(request.url ?? '/', 'http://gateway.invalid')
-    if (request.method === 'GET' && url.pathname === '/healthz') {
+    if (request.method === 'GET' && (url.pathname === '/healthz' || url.pathname === '/health')) {
       writeJson(response, 200, { status: 'ok' })
       return
     }
@@ -659,6 +693,43 @@ async function handleGatewayRequest(
       return
     }
 
+    if (request.method === 'POST' && url.pathname === '/v1/confidential-artifacts') {
+      if (!input.artifacts) throw new Error('Confidential artifact storage is not configured.')
+      requireActor(actor, 'confidential-artifact:write')
+      const body = await readJsonObject(request)
+      rejectServerOwnedAuthority(body)
+      const parsed = parseConfidentialArtifactInput(body)
+      const stored = await input.artifacts.put({
+        artifactId: parsed.artifactId,
+        organizationReference: actor.organizationReference,
+        mediaType: parsed.mediaType,
+        fileName: parsed.fileName,
+        bytes: parsed.bytes,
+      })
+      writeJson(response, 201, {document: parsed.document, artifact: stored})
+      return
+    }
+
+    const artifactMatch = request.method === 'GET'
+      ? url.pathname.match(/^\/v1\/confidential-artifacts\/([^/]+)$/u)
+      : undefined
+    if (artifactMatch) {
+      if (!input.artifacts) throw new Error('Confidential artifact storage is not configured.')
+      requireActor(actor, 'confidential-artifact:read')
+      const artifact = await input.artifacts.get(
+        decodeURIComponent(artifactMatch[1]),
+        actor.organizationReference,
+      )
+      response.writeHead(200, {
+        'content-type': artifact.mediaType,
+        'content-length': String(artifact.bytes.byteLength),
+        'content-disposition': `attachment; filename="${safeAttachmentFileName(artifact.fileName)}"`,
+        'cache-control': 'no-store',
+      })
+      response.end(Buffer.from(artifact.bytes))
+      return
+    }
+
     if (request.method === 'POST' && url.pathname === '/v1/education/qualification-evidence') {
       const body = await readJsonObject(request)
       rejectServerOwnedAuthority(body)
@@ -667,6 +738,32 @@ async function handleGatewayRequest(
         actor,
       })
       writeJson(response, 201, result)
+      return
+    }
+
+    if (request.method === 'POST' && url.pathname === '/v1/social/publications') {
+      if (!input.publications) throw new Error('Social publication Demo storage is not configured.')
+      const body = await readJsonObject(request)
+      rejectServerOwnedAuthority(body)
+      const result = await input.publications.record({
+        actor,
+        content: body.content as SocialPublicationContent,
+        proof: body.proof as ManagedSignatureProof,
+      })
+      writeJson(response, 201, result)
+      return
+    }
+
+    const publicationMatch = request.method === 'GET'
+      ? url.pathname.match(/^\/v1\/social\/publications\/([^/]+)$/u)
+      : undefined
+    if (publicationMatch) {
+      if (!input.publications) throw new Error('Social publication Demo storage is not configured.')
+      const result = await input.publications.read({
+        actor,
+        publicationId: decodeURIComponent(publicationMatch[1]),
+      })
+      writeJson(response, 200, result)
       return
     }
 
@@ -697,6 +794,59 @@ async function handleGatewayRequest(
     const message = error instanceof Error ? error.message : 'Invalid request.'
     writeJson(response, 400, { error: message })
   }
+}
+
+function parseConfidentialArtifactInput(body: Record<string, unknown>): Readonly<{
+  artifactId: string
+  mediaType: string
+  fileName: string
+  bytes: Uint8Array
+  document: ReturnType<typeof buildSchemaOrgConfidentialDocumentGraph>
+}> {
+  const documentInput = body.document as SchemaOrgConfidentialDocumentGraphInput
+  const attachment = body.attachment as DidCommInlineBinaryAttachment
+  const fileName = typeof body.fileName === 'string' ? body.fileName.trim() : ''
+  if (!fileName || /[\r\n]/u.test(fileName)) throw new Error('A safe artifact fileName is required.')
+  if (!documentInput || !Array.isArray(documentInput.documents) || documentInput.documents.length !== 1) {
+    throw new Error('One Schema.org confidential document is required per artifact upload.')
+  }
+  if (!attachment || typeof attachment !== 'object' || !attachment.data || typeof attachment.data.base64 !== 'string') {
+    throw new Error('One inline DIDComm binary attachment is required.')
+  }
+  const descriptor = documentInput.documents[0].attachment
+  if (attachment.id !== descriptor.id || attachment.media_type !== descriptor.mediaType) {
+    throw new Error('DIDComm attachment identity and media type must match the Schema.org MediaObject.')
+  }
+  const bytes = decodeBase64Url(attachment.data.base64)
+  if (!bytes.byteLength || attachment.byte_count !== bytes.byteLength || descriptor.contentSize !== bytes.byteLength) {
+    throw new Error('DIDComm and Schema.org attachment byte counts must match the exact bytes.')
+  }
+  const digest = createHash('sha3-384').update(bytes).digest()
+  if (Buffer.from(descriptor.digest, 'base64').length !== 48
+    || !Buffer.from(descriptor.digest, 'base64').equals(digest)) {
+    throw new Error('Artifact bytes do not match the Schema.org SHA3-384 digest.')
+  }
+  const document = buildSchemaOrgConfidentialDocumentGraph(documentInput)
+  return Object.freeze({
+    artifactId: descriptor.contentId,
+    mediaType: descriptor.mediaType,
+    fileName,
+    bytes,
+    document,
+  })
+}
+
+function decodeBase64Url(value: string): Uint8Array {
+  if (!/^[A-Za-z0-9_-]+={0,2}$/u.test(value)) throw new Error('DIDComm attachment base64 must be base64url encoded.')
+  const bytes = Buffer.from(value, 'base64url')
+  if (!bytes.byteLength || bytes.toString('base64url') !== value.replace(/=+$/u, '')) {
+    throw new Error('DIDComm attachment base64 is invalid.')
+  }
+  return bytes
+}
+
+function safeAttachmentFileName(value: string): string {
+  return value.replace(/["\\/]/gu, '_')
 }
 
 function readBearerCredential(request: IncomingMessage): string | undefined {

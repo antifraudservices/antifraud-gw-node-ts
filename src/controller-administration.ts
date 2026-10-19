@@ -50,7 +50,7 @@ export type ControllerWorkspaceState = Readonly<{
   notifications: readonly ControllerNotification[]
 }>
 
-type MutableWorkspace = {
+export type ControllerWorkspacePersistenceState = {
   organization: ControllerOrganization
   licenceTotal: number
   departments: ControllerDepartment[]
@@ -62,19 +62,19 @@ type MutableWorkspace = {
 }
 
 export interface ControllerAdministrationStore {
-  read(organizationReference: string): Promise<MutableWorkspace | undefined>
-  write(organizationReference: string, state: MutableWorkspace): Promise<void>
+  read(organizationReference: string): Promise<ControllerWorkspacePersistenceState | undefined>
+  write(organizationReference: string, state: ControllerWorkspacePersistenceState): Promise<void>
 }
 
 export class InMemoryControllerAdministrationStore implements ControllerAdministrationStore {
-  readonly #states = new Map<string, MutableWorkspace>()
+  readonly #states = new Map<string, ControllerWorkspacePersistenceState>()
 
-  async read(organizationReference: string): Promise<MutableWorkspace | undefined> {
+  async read(organizationReference: string): Promise<ControllerWorkspacePersistenceState | undefined> {
     const state = this.#states.get(organizationReference)
     return state ? structuredClone(state) : undefined
   }
 
-  async write(organizationReference: string, state: MutableWorkspace): Promise<void> {
+  async write(organizationReference: string, state: ControllerWorkspacePersistenceState): Promise<void> {
     this.#states.set(organizationReference, structuredClone(state))
   }
 }
@@ -203,10 +203,10 @@ export class OrganizationControllerGateway {
     return { purged: true }
   }
 
-  async #state(actor: WorkforceActor): Promise<MutableWorkspace> {
+  async #state(actor: WorkforceActor): Promise<ControllerWorkspacePersistenceState> {
     const existing = await this.#store.read(actor.organizationReference)
     if (existing) return existing
-    const created: MutableWorkspace = {
+    const created: ControllerWorkspacePersistenceState = {
       organization: { reference: actor.organizationReference, displayName: 'Organization' },
       licenceTotal: 5, departments: [], groups: [], invitations: [], employees: [], notifications: [], sequence: 0,
     }
@@ -214,7 +214,7 @@ export class OrganizationControllerGateway {
     return created
   }
 
-  async #save(actor: WorkforceActor, state: MutableWorkspace): Promise<void> {
+  async #save(actor: WorkforceActor, state: ControllerWorkspacePersistenceState): Promise<void> {
     await this.#store.write(actor.organizationReference, state)
   }
 }
@@ -258,28 +258,28 @@ function verifyReferences<T extends { reference: string }>(values: readonly stri
   return references
 }
 
-function employeeIndex(state: MutableWorkspace, reference: string): number {
+function employeeIndex(state: ControllerWorkspacePersistenceState, reference: string): number {
   const index = state.employees.findIndex(employee => employee.reference === reference)
   if (index < 0) throw new Error('Employee was not found in the authenticated organization.')
   return index
 }
 
-function nextReference(state: MutableWorkspace, kind: string): string {
+function nextReference(state: ControllerWorkspacePersistenceState, kind: string): string {
   state.sequence += 1
   return `${kind}:${state.sequence.toString(16).padStart(12, '0')}`
 }
 
-function notify(state: MutableWorkspace, recipientReference: string, event: ControllerNotification['event'], recordedAt: string): string {
+function notify(state: ControllerWorkspacePersistenceState, recipientReference: string, event: ControllerNotification['event'], recordedAt: string): string {
   const reference = nextReference(state, 'communication')
   state.notifications.push({ reference, recipientReference, event, recordedAt })
   return reference
 }
 
-function assignedCount(state: MutableWorkspace): number {
+function assignedCount(state: ControllerWorkspacePersistenceState): number {
   return state.employees.length + state.invitations.filter(item => item.status === 'pending').length + 1
 }
 
-function project(state: MutableWorkspace): ControllerWorkspaceState {
+function project(state: ControllerWorkspacePersistenceState): ControllerWorkspaceState {
   const assigned = assignedCount(state)
   return structuredClone({
     organization: state.organization,

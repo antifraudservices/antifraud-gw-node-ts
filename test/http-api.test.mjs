@@ -1,13 +1,20 @@
 // Flow contract: an authenticated employee calls the public education-qualification API without supplying an actor, zone, channel or smart-contract name; the server resolves workforce authority from the bearer credential, records evidence, exposes only the addressed issuer inbox and persists an issuer decision. Unknown credentials and browser-supplied infrastructure fail closed.
 import assert from 'node:assert/strict'
+import { createHash } from 'node:crypto'
 import { once } from 'node:events'
 import { createServer } from 'node:http'
 import test from 'node:test'
-import { SyntheticConfidentialDocumentFixture } from 'antifraud-data-utils-ts'
 import {
+  SyntheticConfidentialDocumentFixture,
+  buildDidCommInlineBinaryAttachment,
+  buildSha3_384EvidenceContentIdFromDigest,
+} from 'antifraud-data-utils-ts'
+import {
+  ConfidentialArtifactStore,
   EducationQualificationGateway,
   InMemoryAddressedReferenceIndex,
   InMemoryControllerAdministrationStore,
+  InMemoryGatewayObjectBackend,
   InMemoryQualificationLedger,
   OrganizationControllerGateway,
   StaticIssuerDirectory,
@@ -17,7 +24,8 @@ import {
 const actors = new Map([
   ['employer-token', {
     tenantId: 'tenant-employer', organizationReference: 'org:employer', employeeReference: 'employee:reviewer',
-    active: true, groupReferences: ['group:qualification-evidence'], capabilities: ['qualification-evidence:create'],
+    active: true, groupReferences: ['group:qualification-evidence'],
+    capabilities: ['qualification-evidence:create', 'confidential-artifact:write', 'confidential-artifact:read'],
   }],
   ['issuer-token', {
     tenantId: 'tenant-issuer', organizationReference: 'org:issuer', employeeReference: 'employee:issuer-reviewer',
@@ -135,6 +143,84 @@ test('completes the authenticated HTTP evidence and issuer-decision journey', as
     name: 'Injected', organizationReference: 'org:other',
   })
   assert.equal(authorityInjection.response.status, 400)
+})
+
+test('stores and retrieves exact PDF bytes through Schema.org and DIDComm contracts', async t => {
+  const pdfBytes = Buffer.from('%PDF-1.4\n1 0 obj\n<< /Type /Catalog >>\nendobj\n%%EOF\n')
+  const digestBytes = createHash('sha3-384').update(pdfBytes).digest()
+  const digest = digestBytes.toString('base64')
+  const contentId = buildSha3_384EvidenceContentIdFromDigest(digestBytes)
+  const documentInput = {
+    manifest: SyntheticConfidentialDocumentFixture.manifest,
+    documents: [{
+      ...SyntheticConfidentialDocumentFixture.document,
+      attachment: {
+        id: 'urn:attachment:http-minimal-pdf',
+        mediaType: 'application/pdf',
+        contentSize: pdfBytes.byteLength,
+        contentUrl: `/v1/confidential-artifacts/${encodeURIComponent(contentId)}`,
+        digestAlgorithm: 'sha3-384',
+        digest,
+        contentId,
+      },
+    }],
+  }
+  const store = new ConfidentialArtifactStore({
+    objects: new InMemoryGatewayObjectBackend(),
+    objectPrefix: 'test:artifacts:',
+    wallet: {
+      async protectArtifact(owner, bytes) {
+        return `${owner}.${Buffer.from(bytes).toString('base64url')}`
+      },
+      async unprotectArtifact(owner, sealed) {
+        assert.ok(sealed.startsWith(`${owner}.`))
+        return Buffer.from(sealed.slice(owner.length + 1), 'base64url')
+      },
+    },
+  })
+  const gateway = new EducationQualificationGateway({
+    ledger: new InMemoryQualificationLedger(),
+    index: new InMemoryAddressedReferenceIndex(),
+    directory: new StaticIssuerDirectory([]),
+  })
+  const handler = createAntifraudGatewayHttpHandler({
+    gateway,
+    artifacts: store,
+    resolveActor: async bearer => actors.get(bearer),
+  })
+  const server = createServer(handler)
+  server.listen(0, '127.0.0.1')
+  await once(server, 'listening')
+  t.after(() => server.close())
+  const address = server.address()
+  assert.ok(address && typeof address === 'object')
+  const baseUrl = `http://127.0.0.1:${address.port}`
+
+  const created = await jsonRequest(`${baseUrl}/v1/confidential-artifacts`, 'POST', 'employer-token', {
+    document: documentInput,
+    attachment: buildDidCommInlineBinaryAttachment({
+      id: documentInput.documents[0].attachment.id,
+      mediaType: 'application/pdf',
+      bytes: pdfBytes,
+    }),
+    fileName: 'synthetic-minimal.pdf',
+  })
+  assert.equal(created.response.status, 201)
+  assert.equal(created.body.document.jsonapi.version, '1.1')
+  assert.equal(created.body.artifact.byteCount, pdfBytes.byteLength)
+  assert.equal('DocumentReference' in JSON.parse(JSON.stringify(created.body)), false)
+
+  const retrieved = await fetch(`${baseUrl}/v1/confidential-artifacts/${encodeURIComponent(contentId)}`, {
+    headers: { authorization: 'Bearer employer-token' },
+  })
+  assert.equal(retrieved.status, 200)
+  assert.equal(retrieved.headers.get('content-type'), 'application/pdf')
+  assert.deepEqual(Buffer.from(await retrieved.arrayBuffer()), pdfBytes)
+
+  const denied = await fetch(`${baseUrl}/v1/confidential-artifacts/${encodeURIComponent(contentId)}`, {
+    headers: { authorization: 'Bearer issuer-token' },
+  })
+  assert.equal(denied.status, 400)
 })
 
 async function jsonRequest(url, method, token, body) {
