@@ -1,4 +1,4 @@
-// Flow contract: an authenticated employee calls the public education-qualification API without supplying an actor, zone, channel or smart-contract name; the server resolves workforce authority from the bearer credential, records evidence, exposes only the addressed issuer inbox and persists an issuer decision. Unknown credentials and browser-supplied infrastructure fail closed.
+// Flow contract: authenticated BFFs call the neutral evidence and controller APIs without supplying actor, organization, zone, channel or smart-contract authority; the server resolves authority, records evidence, maintains organization Place and Service state, publishes only a coherent public catalog, exposes only the addressed issuer inbox and persists decisions. Unknown credentials and browser-supplied authority fail closed.
 import assert from 'node:assert/strict'
 import { createHash } from 'node:crypto'
 import { once } from 'node:events'
@@ -44,7 +44,7 @@ const actors = new Map([
   ['controller-token', {
     tenantId: 'tenant-employer', organizationReference: 'org:employer', employeeReference: 'employee:controller',
     active: true, groupReferences: ['group:controllers'],
-    capabilities: ['controller.organization.read', 'controller.structure.write', 'controller.workforce.write'],
+    capabilities: ['controller.organization.read', 'controller.structure.write', 'controller.workforce.write', 'controller.catalog.publish'],
   }],
 ])
 
@@ -59,7 +59,14 @@ test('completes the authenticated HTTP evidence and issuer-decision journey', as
   })
   const handler = createAntifraudGatewayHttpHandler({
     gateway,
-    controller: new OrganizationControllerGateway({ store: new InMemoryControllerAdministrationStore() }),
+    controller: new OrganizationControllerGateway({
+      store: new InMemoryControllerAdministrationStore(),
+      catalog: {
+        jurisdiction: 'CA-BC',
+        sector: 'education',
+        accessUrl: 'https://catalog.example.invalid/organization/services',
+      },
+    }),
     resolveActor: async bearer => actors.get(bearer),
   })
   const server = createServer(handler)
@@ -151,6 +158,33 @@ test('completes the authenticated HTTP evidence and issuer-decision journey', as
   const state = await jsonRequest(`${baseUrl}/v1/controller/workspace`, 'GET', 'controller-token')
   assert.equal(state.response.status, 200)
   assert.equal(state.body.departments[0].name, 'Operations')
+  const createdPlace = await jsonRequest(`${baseUrl}/v1/controller/places`, 'POST', 'controller-token', {
+    name: 'Public service point', departmentReference: createdDepartment.body.department.reference,
+    geo: {latitude: 49.28, longitude: -123.12},
+  })
+  assert.equal(createdPlace.response.status, 201)
+  const publishedPlace = await jsonRequest(
+    `${baseUrl}/v1/controller/places/${encodeURIComponent(createdPlace.body.place.reference)}/catalog-publication`,
+    'PUT', 'controller-token', {publishInCatalog: true},
+  )
+  assert.equal(publishedPlace.response.status, 200)
+  const createdService = await jsonRequest(`${baseUrl}/v1/controller/services`, 'POST', 'controller-token', {
+    name: 'Qualification assessment', serviceType: 'qualification-assessment',
+    departmentReference: createdDepartment.body.department.reference,
+    placeReferences: [createdPlace.body.place.reference],
+  })
+  assert.equal(createdService.response.status, 201)
+  const publishedService = await jsonRequest(
+    `${baseUrl}/v1/controller/services/${encodeURIComponent(createdService.body.service.reference)}/catalog-publication`,
+    'PUT', 'controller-token', {publishInCatalog: true},
+  )
+  assert.equal(publishedService.response.status, 200)
+  const publicCatalog = await fetch(`${baseUrl}/v1/public/organization-service-catalog/${encodeURIComponent('org:employer')}`)
+  assert.equal(publicCatalog.status, 200)
+  const publicCatalogBody = await publicCatalog.json()
+  assert.equal(publicCatalogBody.resources.some(resource => resource.resourceType === 'Place'), true)
+  assert.equal(publicCatalogBody.resources.some(resource => resource.resourceType === 'Service'), true)
+  assert.equal(JSON.stringify(publicCatalogBody).includes('HealthcareService'), false)
   const authorityInjection = await jsonRequest(`${baseUrl}/v1/controller/departments`, 'POST', 'controller-token', {
     name: 'Injected', organizationReference: 'org:other',
   })

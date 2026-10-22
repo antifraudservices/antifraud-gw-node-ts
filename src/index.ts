@@ -613,6 +613,16 @@ async function handleGatewayRequest(
       writeJson(response, 200, { status: 'ok' })
       return
     }
+    const publicServiceCatalogMatch = request.method === 'GET'
+      ? url.pathname.match(/^\/v1\/public\/organization-service-catalog\/([^/]+)$/u)
+      : undefined
+    if (publicServiceCatalogMatch) {
+      if (!input.controller) throw new Error('Controller administration is not configured.')
+      writeJson(response, 200, await input.controller.readPublicServiceCatalog(
+        decodeURIComponent(publicServiceCatalogMatch[1]),
+      ))
+      return
+    }
     const bearerCredential = readBearerCredential(request)
     const actor = bearerCredential ? await input.resolveActor(bearerCredential) : undefined
     if (!actor) {
@@ -643,6 +653,75 @@ async function handleGatewayRequest(
       writeJson(response, 201, await input.controller.createGroup({
         actor, name: body.name as string, capabilities: body.capabilities as string[], organizationReference: body.organizationReference,
       }))
+      return
+    }
+
+    if (request.method === 'POST' && url.pathname === '/v1/controller/places') {
+      if (!input.controller) throw new Error('Controller administration is not configured.')
+      const body = await readJsonObject(request)
+      rejectServerOwnedAuthority(body)
+      writeJson(response, 201, await input.controller.createPlace({
+        actor,
+        name: body.name as string,
+        departmentReference: body.departmentReference as string,
+        containedInPlaceReference: body.containedInPlaceReference as string | undefined,
+        geo: body.geo as { latitude: number; longitude: number; elevation?: number } | undefined,
+        organizationReference: body.organizationReference,
+      }))
+      return
+    }
+
+    if (request.method === 'POST' && url.pathname === '/v1/controller/services') {
+      if (!input.controller) throw new Error('Controller administration is not configured.')
+      const body = await readJsonObject(request)
+      rejectServerOwnedAuthority(body)
+      writeJson(response, 201, await input.controller.createClientService({
+        actor,
+        name: body.name as string,
+        description: body.description as string | undefined,
+        serviceType: body.serviceType as string,
+        departmentReference: body.departmentReference as string,
+        placeReferences: body.placeReferences as string[],
+        organizationReference: body.organizationReference,
+      }))
+      return
+    }
+
+    const placePublicationMatch = request.method === 'PUT'
+      ? url.pathname.match(/^\/v1\/controller\/places\/([^/]+)\/catalog-publication$/u)
+      : undefined
+    if (placePublicationMatch) {
+      if (!input.controller) throw new Error('Controller administration is not configured.')
+      const body = await readJsonObject(request)
+      rejectServerOwnedAuthority(body)
+      writeJson(response, 200, await input.controller.setPlaceCatalogPublication({
+        actor,
+        placeReference: decodeURIComponent(placePublicationMatch[1]),
+        publishInCatalog: body.publishInCatalog as boolean,
+        organizationReference: body.organizationReference,
+      }))
+      return
+    }
+
+    const servicePublicationMatch = request.method === 'PUT'
+      ? url.pathname.match(/^\/v1\/controller\/services\/([^/]+)\/catalog-publication$/u)
+      : undefined
+    if (servicePublicationMatch) {
+      if (!input.controller) throw new Error('Controller administration is not configured.')
+      const body = await readJsonObject(request)
+      rejectServerOwnedAuthority(body)
+      writeJson(response, 200, await input.controller.setClientServiceCatalogPublication({
+        actor,
+        serviceReference: decodeURIComponent(servicePublicationMatch[1]),
+        publishInCatalog: body.publishInCatalog as boolean,
+        organizationReference: body.organizationReference,
+      }))
+      return
+    }
+
+    if (request.method === 'GET' && url.pathname === '/v1/controller/service-catalog') {
+      if (!input.controller) throw new Error('Controller administration is not configured.')
+      writeJson(response, 200, await input.controller.readPublishedServiceCatalog({ actor }))
       return
     }
 

@@ -1,4 +1,8 @@
 import type { WorkforceActor } from './index.js'
+import {
+  buildPublicOrganizationServiceCatalog,
+  type PublicOrganizationServiceCatalog,
+} from 'antifraud-data-utils-ts/organization-service-catalog'
 
 export type ControllerEmployeeStatus = 'active' | 'inactive'
 
@@ -10,6 +14,23 @@ export type ControllerOrganization = Readonly<{
 }>
 
 export type ControllerDepartment = Readonly<{ reference: string; name: string }>
+export type ControllerPlace = Readonly<{
+  reference: string
+  name: string
+  departmentReference: string
+  containedInPlaceReference?: string
+  geo?: Readonly<{ latitude: number; longitude: number; elevation?: number }>
+  publishInCatalog: boolean
+}>
+export type ControllerClientService = Readonly<{
+  reference: string
+  name: string
+  description?: string
+  serviceType: string
+  departmentReference: string
+  placeReferences: readonly string[]
+  publishInCatalog: boolean
+}>
 export type ControllerGroup = Readonly<{
   reference: string
   name: string
@@ -44,6 +65,9 @@ export type ControllerWorkspaceState = Readonly<{
   organization: ControllerOrganization
   licences: Readonly<{ total: number; assigned: number; free: number }>
   departments: readonly ControllerDepartment[]
+  places: readonly ControllerPlace[]
+  services: readonly ControllerClientService[]
+  catalog: Readonly<{ version: number; modifiedAt?: string }>
   groups: readonly ControllerGroup[]
   invitations: readonly ControllerInvitation[]
   employees: readonly ControllerEmployee[]
@@ -54,6 +78,11 @@ export type ControllerWorkspacePersistenceState = {
   organization: ControllerOrganization
   licenceTotal: number
   departments: ControllerDepartment[]
+  places: ControllerPlace[]
+  services: ControllerClientService[]
+  catalogVersion: number
+  catalogIssuedAt?: string
+  catalogModifiedAt?: string
   groups: ControllerGroup[]
   invitations: ControllerInvitation[]
   employees: ControllerEmployee[]
@@ -82,10 +111,26 @@ export class InMemoryControllerAdministrationStore implements ControllerAdminist
 export class OrganizationControllerGateway {
   readonly #store: ControllerAdministrationStore
   readonly #clock: () => string
+  readonly #catalog?: Readonly<{
+    jurisdiction: string
+    sector: string
+    accessUrl: string
+    mediaType?: 'application/vnd.api+json' | 'application/ld+json'
+  }>
 
-  constructor(input: { store: ControllerAdministrationStore; clock?: () => string }) {
+  constructor(input: {
+    store: ControllerAdministrationStore
+    clock?: () => string
+    catalog?: Readonly<{
+      jurisdiction: string
+      sector: string
+      accessUrl: string
+      mediaType?: 'application/vnd.api+json' | 'application/ld+json'
+    }>
+  }) {
     this.#store = input.store
     this.#clock = input.clock ?? (() => new Date().toISOString())
+    this.#catalog = input.catalog
   }
 
   async readWorkspace(input: { actor: WorkforceActor }): Promise<ControllerWorkspaceState> {
@@ -103,6 +148,121 @@ export class OrganizationControllerGateway {
     state.departments.push(department)
     await this.#save(input.actor, state)
     return { department }
+  }
+
+  async createPlace(input: {
+    actor: WorkforceActor
+    name: string
+    departmentReference: string
+    containedInPlaceReference?: string
+    geo?: Readonly<{ latitude: number; longitude: number; elevation?: number }>
+    organizationReference?: unknown
+  }): Promise<{ place: ControllerPlace }> {
+    rejectOrganizationSelection(input)
+    requireController(input.actor, 'controller.structure.write')
+    const state = await this.#state(input.actor)
+    const departmentReference = verifyReference(input.departmentReference, state.departments, 'department')
+    const containedInPlaceReference = input.containedInPlaceReference
+      ? verifyReference(input.containedInPlaceReference, state.places, 'place')
+      : undefined
+    if (containedInPlaceReference) {
+      const parent = state.places.find(item => item.reference === containedInPlaceReference)
+      if (parent?.departmentReference !== departmentReference) throw new Error('A parent place must belong to the same department.')
+    }
+    const place: ControllerPlace = {
+      reference: nextReference(state, 'place'),
+      name: requireText(input.name, 'Place name'),
+      departmentReference,
+      ...(containedInPlaceReference ? { containedInPlaceReference } : {}),
+      ...(input.geo ? { geo: normalizeGeo(input.geo) } : {}),
+      publishInCatalog: false,
+    }
+    state.places.push(place)
+    await this.#save(input.actor, state)
+    return { place }
+  }
+
+  async createClientService(input: {
+    actor: WorkforceActor
+    name: string
+    description?: string
+    serviceType: string
+    departmentReference: string
+    placeReferences: readonly string[]
+    organizationReference?: unknown
+  }): Promise<{ service: ControllerClientService }> {
+    rejectOrganizationSelection(input)
+    requireController(input.actor, 'controller.structure.write')
+    const state = await this.#state(input.actor)
+    const departmentReference = verifyReference(input.departmentReference, state.departments, 'department')
+    const placeReferences = verifyReferences(input.placeReferences, state.places, 'place')
+    if (placeReferences.length === 0) throw new Error('At least one place is required.')
+    if (placeReferences.some(reference => state.places.find(place => place.reference === reference)?.departmentReference !== departmentReference)) {
+      throw new Error('Every service place must belong to the selected department.')
+    }
+    const service: ControllerClientService = {
+      reference: nextReference(state, 'service'),
+      name: requireText(input.name, 'Service name'),
+      ...(input.description ? { description: requireText(input.description, 'Service description') } : {}),
+      serviceType: requireReference(input.serviceType, 'serviceType'),
+      departmentReference,
+      placeReferences,
+      publishInCatalog: false,
+    }
+    state.services.push(service)
+    await this.#save(input.actor, state)
+    return { service }
+  }
+
+  async setPlaceCatalogPublication(input: {
+    actor: WorkforceActor
+    placeReference: string
+    publishInCatalog: boolean
+    organizationReference?: unknown
+  }): Promise<{ place: ControllerPlace }> {
+    rejectOrganizationSelection(input)
+    requireController(input.actor, 'controller.catalog.publish')
+    const state = await this.#state(input.actor)
+    const index = state.places.findIndex(place => place.reference === input.placeReference)
+    if (index < 0) throw new Error('Place was not found in the authenticated organization.')
+    if (!input.publishInCatalog && state.services.some(service => service.publishInCatalog && service.placeReferences.includes(input.placeReference))) {
+      throw new Error('A place used by a public service cannot be made private.')
+    }
+    state.places[index] = { ...state.places[index], publishInCatalog: requireBoolean(input.publishInCatalog) }
+    touchCatalog(state, this.#clock())
+    this.#buildCatalog(state)
+    await this.#save(input.actor, state)
+    return { place: state.places[index] }
+  }
+
+  async setClientServiceCatalogPublication(input: {
+    actor: WorkforceActor
+    serviceReference: string
+    publishInCatalog: boolean
+    organizationReference?: unknown
+  }): Promise<{ service: ControllerClientService }> {
+    rejectOrganizationSelection(input)
+    requireController(input.actor, 'controller.catalog.publish')
+    const state = await this.#state(input.actor)
+    const index = state.services.findIndex(service => service.reference === input.serviceReference)
+    if (index < 0) throw new Error('Service was not found in the authenticated organization.')
+    state.services[index] = { ...state.services[index], publishInCatalog: requireBoolean(input.publishInCatalog) }
+    touchCatalog(state, this.#clock())
+    this.#buildCatalog(state)
+    await this.#save(input.actor, state)
+    return { service: state.services[index] }
+  }
+
+  async readPublishedServiceCatalog(input: { actor: WorkforceActor }): Promise<PublicOrganizationServiceCatalog> {
+    requireController(input.actor, 'controller.organization.read')
+    return this.#buildCatalog(await this.#state(input.actor))
+  }
+
+  async readPublicServiceCatalog(organizationReference: string): Promise<PublicOrganizationServiceCatalog> {
+    const normalizedReference = requireReference(organizationReference, 'organizationReference')
+    const state = await this.#store.read(normalizedReference)
+    if (!state) throw new Error('Published organization service catalog was not found.')
+    return this.#buildCatalog(normalizePersistedState(state))
   }
 
   async createGroup(input: { actor: WorkforceActor; name: string; capabilities: readonly string[]; organizationReference?: unknown }): Promise<ControllerGroup> {
@@ -205,10 +365,11 @@ export class OrganizationControllerGateway {
 
   async #state(actor: WorkforceActor): Promise<ControllerWorkspacePersistenceState> {
     const existing = await this.#store.read(actor.organizationReference)
-    if (existing) return existing
+    if (existing) return normalizePersistedState(existing)
     const created: ControllerWorkspacePersistenceState = {
       organization: { reference: actor.organizationReference, displayName: 'Organization' },
-      licenceTotal: 5, departments: [], groups: [], invitations: [], employees: [], notifications: [], sequence: 0,
+      licenceTotal: 5, departments: [], places: [], services: [], catalogVersion: 0,
+      groups: [], invitations: [], employees: [], notifications: [], sequence: 0,
     }
     await this.#store.write(actor.organizationReference, created)
     return created
@@ -216,6 +377,52 @@ export class OrganizationControllerGateway {
 
   async #save(actor: WorkforceActor, state: ControllerWorkspacePersistenceState): Promise<void> {
     await this.#store.write(actor.organizationReference, state)
+  }
+
+  #buildCatalog(state: ControllerWorkspacePersistenceState): PublicOrganizationServiceCatalog {
+    if (!this.#catalog) throw new Error('Organization service catalog is not configured.')
+    if (state.catalogVersion < 1 || !state.catalogIssuedAt || !state.catalogModifiedAt) {
+      throw new Error('Organization service catalog has not been published.')
+    }
+    const publicDepartmentReferences = new Set([
+      ...state.places.filter(place => place.publishInCatalog).map(place => place.departmentReference),
+      ...state.services.filter(service => service.publishInCatalog).map(service => service.departmentReference),
+    ])
+    return buildPublicOrganizationServiceCatalog({
+      datasetId: `catalog:${state.organization.reference}`,
+      version: state.catalogVersion,
+      issuedAt: state.catalogIssuedAt,
+      modifiedAt: state.catalogModifiedAt,
+      jurisdiction: this.#catalog.jurisdiction,
+      sector: this.#catalog.sector,
+      publisher: { id: state.organization.reference, name: state.organization.displayName, publishInCatalog: true },
+      departments: state.departments.map(department => ({
+        id: department.reference,
+        name: department.name,
+        publishInCatalog: publicDepartmentReferences.has(department.reference),
+      })),
+      places: state.places.map(place => ({
+        id: place.reference,
+        departmentId: place.departmentReference,
+        name: place.name,
+        publishInCatalog: place.publishInCatalog,
+        ...(place.containedInPlaceReference ? { containedInPlaceId: place.containedInPlaceReference } : {}),
+        ...(place.geo ? { geo: place.geo } : {}),
+      })),
+      services: state.services.map(service => ({
+        id: service.reference,
+        departmentId: service.departmentReference,
+        name: service.name,
+        ...(service.description ? { description: service.description } : {}),
+        serviceType: service.serviceType,
+        placeIds: service.placeReferences,
+        publishInCatalog: service.publishInCatalog,
+      })),
+      distribution: {
+        accessUrl: this.#catalog.accessUrl,
+        mediaType: this.#catalog.mediaType ?? 'application/vnd.api+json',
+      },
+    })
   }
 }
 
@@ -258,6 +465,37 @@ function verifyReferences<T extends { reference: string }>(values: readonly stri
   return references
 }
 
+function verifyReference<T extends { reference: string }>(value: string, available: readonly T[], label: string): string {
+  return verifyReferences([value], available, label)[0]
+}
+
+function requireBoolean(value: boolean): boolean {
+  if (typeof value !== 'boolean') throw new Error('Catalog publication state must be boolean.')
+  return value
+}
+
+function normalizeGeo(value: Readonly<{ latitude: number; longitude: number; elevation?: number }>): Readonly<{ latitude: number; longitude: number; elevation?: number }> {
+  if (!Number.isFinite(value.latitude) || value.latitude < -90 || value.latitude > 90) throw new Error('Place latitude is invalid.')
+  if (!Number.isFinite(value.longitude) || value.longitude < -180 || value.longitude > 180) throw new Error('Place longitude is invalid.')
+  if (value.elevation !== undefined && !Number.isFinite(value.elevation)) throw new Error('Place elevation is invalid.')
+  return Object.freeze({ latitude: value.latitude, longitude: value.longitude, ...(value.elevation === undefined ? {} : { elevation: value.elevation }) })
+}
+
+function touchCatalog(state: ControllerWorkspacePersistenceState, recordedAt: string): void {
+  state.catalogVersion += 1
+  state.catalogIssuedAt ??= recordedAt
+  state.catalogModifiedAt = recordedAt
+}
+
+function normalizePersistedState(state: ControllerWorkspacePersistenceState): ControllerWorkspacePersistenceState {
+  return {
+    ...state,
+    places: state.places ?? [],
+    services: state.services ?? [],
+    catalogVersion: state.catalogVersion ?? 0,
+  }
+}
+
 function employeeIndex(state: ControllerWorkspacePersistenceState, reference: string): number {
   const index = state.employees.findIndex(employee => employee.reference === reference)
   if (index < 0) throw new Error('Employee was not found in the authenticated organization.')
@@ -285,6 +523,9 @@ function project(state: ControllerWorkspacePersistenceState): ControllerWorkspac
     organization: state.organization,
     licences: { total: state.licenceTotal, assigned, free: Math.max(0, state.licenceTotal - assigned) },
     departments: state.departments,
+    places: state.places,
+    services: state.services,
+    catalog: { version: state.catalogVersion, ...(state.catalogModifiedAt ? { modifiedAt: state.catalogModifiedAt } : {}) },
     groups: state.groups,
     invitations: state.invitations,
     employees: state.employees,

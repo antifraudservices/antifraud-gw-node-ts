@@ -60,6 +60,7 @@ const ACTORS: Readonly<Record<DemoTokenRole, WorkforceActor>> = Object.freeze({
       'controller.organization.read',
       'controller.structure.write',
       'controller.workforce.write',
+      'controller.catalog.publish',
       'qualification-inbox:list',
       'qualification-evidence:decide',
       'confidential-artifact:write',
@@ -168,6 +169,12 @@ export function createGatewayDemoRuntime(
   })
   const controller = new OrganizationControllerGateway({
     store: new GatewayDocumentControllerAdministrationStore(documents),
+    catalog: {
+      jurisdiction: environment.ORGANIZATION_CATALOG_JURISDICTION?.trim() || 'CA-BC',
+      sector: environment.ORGANIZATION_CATALOG_SECTOR?.trim() || 'education',
+      accessUrl: environment.ORGANIZATION_CATALOG_ACCESS_URL?.trim()
+        || 'https://catalog.invalid/v1/public/organization-service-catalog/organization%3Ademo-employer',
+    },
   })
   const artifacts = new ConfidentialArtifactStore({
     objects: documentBackendName === 'memory' && !options.documentBackend
