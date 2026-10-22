@@ -65,6 +65,10 @@ a later increment.
 The neutral controller portal manages organizations, employees, departments,
 groups, reusable workforce authorizations and the controller-authorized
 employee identity, age-over and employer qualification-evidence workflows.
+It also manages organization Places and client Services as separate structure
+records. Explicit catalog publication is a distinct controller capability;
+schedules, appointments, subjects, research studies and dataset-contract
+approval remain separate workflows.
 
 Antifraud document persistence is Schema.org-native: `DigitalDocument` plus
 `MediaObject`. PDF, spreadsheet, Word, image, video and other governed bytes
@@ -83,6 +87,16 @@ or grants authority in browser state.
   status and purge routes mutate only the authenticated organization and
   return state that can be read after gateway reconstruction over the same
   store.
+- `POST /v1/controller/places` and `POST /v1/controller/services` create
+  Schema.org Place and Service records for the authenticated organization.
+  Their catalog-publication routes require `controller.catalog.publish` and
+  reject a public Service unless every referenced Place is public and belongs
+  to the same department.
+- `GET /v1/controller/service-catalog` gives the authenticated controller the
+  current catalog, while
+  `GET /v1/public/organization-service-catalog/:organizationReference` exposes
+  only the explicitly public graph. Jurisdiction, sector and access URL come
+  from trusted server configuration.
 - `POST /v1/identity/evidence` records a canonical neutral identity-evidence
   statement and a privacy-minimized `identity-global` anchor.
 - `POST /v1/education/qualification-evidence` records an employer attestation

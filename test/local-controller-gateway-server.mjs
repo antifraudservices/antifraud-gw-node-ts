@@ -52,6 +52,7 @@ const actor = Object.freeze({
   capabilities: [
     'identity.evidence.record', 'qualification-evidence:create',
     'controller.organization.read', 'controller.structure.write', 'controller.workforce.write',
+    'controller.catalog.publish',
     'qualification-inbox:list', 'qualification-evidence:decide',
     'confidential-artifact:write', 'confidential-artifact:read',
   ],
@@ -119,7 +120,14 @@ if (seededAnchor) {
   })
 }
 
-const controller = new OrganizationControllerGateway({ store: new InMemoryControllerAdministrationStore() })
+const controller = new OrganizationControllerGateway({
+  store: new InMemoryControllerAdministrationStore(),
+  catalog: {
+    jurisdiction: 'CA-BC',
+    sector: 'education',
+    accessUrl: 'https://catalog.example.invalid/organization/services',
+  },
+})
 const managedWallet = new NodeManagedWallet()
 const artifacts = new ConfidentialArtifactStore({
   objects: new InMemoryGatewayObjectBackend(),

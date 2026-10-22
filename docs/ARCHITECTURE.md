@@ -251,6 +251,25 @@ and local through Test Network evidence. Record every capability as adopted,
 already equivalent, profile-specific or rejected. Never merge an entire
 product branch or inherit its identities and deployment configuration.
 
+## Organization service-catalog boundary
+
+The controller owns organization structure, including departments, employee
+groups, Schema.org Places and client Services. Those concepts remain separate
+in storage and in the portal. Creating structure never publishes it.
+
+An actor with the separately reviewed `controller.catalog.publish` capability
+may mark a Place or Service public. The gateway builds the organization catalog
+from the shared claims-first contract and trusted server configuration for
+publisher jurisdiction, sector, media type and access URL. The browser cannot
+select those values. A public Service must belong to a public department and
+reference at least one public Place in that same department.
+
+The public graph contains only Schema.org Organization, Place and Service
+resources plus its DCAT descriptor. Scheduling, Slots, Appointments, subjects,
+research studies, contracts and payments are outside this manager. FHIR
+translation, if required later, is an adapter concern rather than a second
+canonical write.
+
 ## Completion condition
 
 The gateway remains a scaffold until automated journeys prove:

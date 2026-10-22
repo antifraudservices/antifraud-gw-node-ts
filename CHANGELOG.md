@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- Add controller-managed Schema.org Place and client Service records with
+  explicit public-catalog publication. Publish only a server-configured DCAT
+  organization catalog and expose public readback without giving callers
+  organization, sector, jurisdiction or catalog-endpoint authority. Pin the
+  canonical catalog contract from `antifraud-data-utils-ts@0.1.10`.
+
 - Add addressed-issuer confidential evidence readback. The federated inbox and
   ledger anchor remain privacy-minimized, while the exact addressed issuer can
   open the employer attestation and canonical qualification classification.

@@ -27,7 +27,7 @@
     "@google-cloud/firestore": "8.7.1",
     "@grpc/grpc-js": "^1.14.6",
     "@hyperledger/fabric-gateway": "^1.13.0",
-    "antifraud-data-utils-ts": "0.1.8",
+    "antifraud-data-utils-ts": "0.1.10",
     "antifraud-sdk-node-ts": "0.2.4"
   }
 }
