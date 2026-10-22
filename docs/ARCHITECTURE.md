@@ -270,6 +270,22 @@ research studies, contracts and payments are outside this manager. FHIR
 translation, if required later, is an adapter concern rather than a second
 canonical write.
 
+## Reusable existing-employee entry
+
+The portal may reuse the neutral existing-professional screen used by other
+domains: scan or upload a signed credential QR, or enter one DID/URN plus the
+organization sector manually. The presentation returns only a credential or a
+routing hint and never grants authority.
+
+The trusted Antifraud backend verifies signature, issuer trust, credential
+status, employee binding and jurisdiction, then extracts the active employee
+reference from the governed W3C credential and its protected JSON:API primary
+document containing Schema.org resources. A health or veterinary host may use
+the same screen with an SHC/FHIR adapter, but that adapter is not part of this
+gateway. The employee invitation remains a temporary activation artifact, the
+professional credential remains reusable evidence and DCR remains a separate
+per-device registration.
+
 ## Completion condition
 
 The gateway remains a scaffold until automated journeys prove:

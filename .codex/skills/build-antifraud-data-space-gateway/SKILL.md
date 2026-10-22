@@ -118,6 +118,17 @@ until the neutral controller portal reaches real backend and local-network
 parity. Remove or redirect that controller surface only after parity is proven;
 sector-specific professional work remains in its owning portal.
 
+Reuse the neutral existing-employee presentation without reusing a clinical
+payload adapter. The same screen may scan or upload a signed professional
+credential, or accept one DID/URN plus sector as a manual fallback. Its server
+adapter must verify signature, issuer trust, status, holder/employee binding
+and jurisdiction before returning one neutral active-employee reference.
+Health and veterinary adapters may extract that reference from an SHC/FHIR
+Bundle. Antifraud extracts it from its governed W3C credential and protected
+JSON:API primary document with Schema.org resources; it never introduces a
+FHIR Bundle. A temporary employee invitation, a reusable professional
+credential and device registration are three separate artifacts and flows.
+
 For the education MVP, inspect the current CCAAS manifest and lifecycle scripts.
 Extend governed channel membership and commit `evidence-sc` on each approved
 education qualification channel. Audit whether `artifact-sc`,
