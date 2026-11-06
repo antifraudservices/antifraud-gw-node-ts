@@ -1,16 +1,34 @@
 # Antifraud Data Space Gateway
 
-**Trust important facts online while sharing only the data required.**
+Antifraud Data Space is a trust network where verified individuals and
+companies can exchange reliable evidence and documents while sharing only the
+necessary information. It allows services to ask for and verify facts (such as
+whether someone is over a required age or holds a qualification) without
+receiving their birth date, identity document or unrelated personal data.
 
-The Antifraud Data Space helps people, families, businesses and digital
-services distinguish verified evidence from unsupported claims. It brings
-verifiable trust to age assurance, identity, employee authority,
-qualifications, documents and organization services.
+It is intended for individuals and companies, such as banks, insurers,
+financial services providers, legal and accounting firms, educational
+organizations, utility providers, delivery companies, gaming companies and
+digital platforms, among others. Verified companies can publish the
+departments and services through which they receive information. For example,
+an invoice from a verified company can be addressed to a published department
+or service and linked directly to the corresponding section of the recipient's
+Global Unified Data Index.
 
-The Gateway is the server-side trust engine behind the Antifraud portals. It
-checks who is acting, which verified organization they represent, what they
-are allowed to do and how evidence must be protected before it is recorded or
-shared.
+The same model will allow verified companies to add new invoices, legal
+records, notices and other documents directly to the recipient's data index.
+This gives individuals and companies a trusted place to verify genuine
+communications instead of relying on links received through email or Short
+Message Service (SMS), helping reduce impersonation, malicious-link, payment,
+invoice and document fraud.
+
+The current foundation covers age and education qualification evidence. The
+project will create and prioritize the complete development backlog, build
+comprehensive automated tests, complete the request and verification journey,
+and extend the model to additional documents, evidence types, sectors and
+regions.
+
+*Some aspects of the Antifraud Data Space architecture are patent pending.*
 
 ## Why this matters
 
@@ -78,7 +96,8 @@ envelope.
 ## Shared Data Space roadmap
 
 The complete Antifraud Data Space is designed as one connected trust network
-for social networks, marketplaces, insurers, schools, banks and other relying
+for social networks, online games, insurers, schools, banks, legal and
+accounting firms, utility providers, delivery companies and other relying
 parties. Each request is limited to the evidence required for one declared
 purpose.
 
@@ -192,8 +211,6 @@ The current MVP is deliberately narrow. It starts with identity and age-over
 evidence for employees and qualification evidence for education
 organizations. It proves that the basic trust chain can work, but it does not
 yet provide the complete cross-sector product described above.
-
-Some aspects of the architecture are patent pending.
 
 ## Work still to be planned and developed
 
