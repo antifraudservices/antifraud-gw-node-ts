@@ -7,7 +7,10 @@
   assurance, cross-sector JSON:API and Schema.org architecture, Shared Data
   Space roadmap, payment-adapter boundary and linked public repository
   ecosystem. Keep implemented MVP status and environment evidence explicit,
-  use plain language and expand regional and technical abbreviations.
+  use plain language, expand regional and technical abbreviations, and make
+  clear that creating the detailed cross-repository backlog, completing the
+  test strategy and extending to other sectors are substantial work still to
+  be done.
 
 - Add controller-managed Schema.org Place and client Service records with
   explicit public-catalog publication. Publish only a server-configured DCAT
