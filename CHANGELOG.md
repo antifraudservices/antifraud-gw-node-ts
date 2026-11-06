@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+- Rewrite the public README around the Antifraud Data Space mission, human and
+  business impact, organization-based trust chain, privacy-minimized age
+  assurance, cross-sector JSON:API and Schema.org architecture, Shared Data
+  Space roadmap, payment-adapter boundary and linked public repository
+  ecosystem. Keep implemented MVP status and environment evidence explicit,
+  use plain language and expand regional and technical abbreviations.
+
 - Add controller-managed Schema.org Place and client Service records with
   explicit public-catalog publication. Publish only a server-configured DCAT
   organization catalog and expose public readback without giving callers

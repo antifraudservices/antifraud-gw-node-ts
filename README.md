@@ -1,37 +1,200 @@
 # Antifraud Data Space Gateway
 
-Public scaffold for the multidomain Antifraud data-space gateway. It will
-coordinate identity references, evidence indexes and ledger registration for
-several business domains. Qualifications are one domain; they do not define
-the whole gateway.
+**Trust important facts online while sharing only the data required.**
+
+The Antifraud Data Space helps people, families, businesses and digital
+services distinguish verified evidence from unsupported claims. It brings
+verifiable trust to age assurance, identity, employee authority,
+qualifications, documents and organization services.
+
+The Gateway is the server-side trust engine behind the Antifraud portals. It
+checks who is acting, which verified organization they represent, what they
+are allowed to do and how evidence must be protected before it is recorded or
+shared.
+
+## Why this matters
+
+Online profiles often rely on self-declared age, identity and qualifications.
+An adult can pretend to be a minor, gain a child's trust and use
+private information for manipulation or extortion. The harm can include fear,
+severe stress, depression and, in extreme cases, risk of self-harm. Businesses
+also face false identities, forged documents, invented professional
+qualifications and impersonation of legitimate organizations or employees.
+
+Antifraud adds verifiable evidence to the wider safety ecosystem of families,
+platforms, safeguarding teams and public authorities. When an important fact
+must be checked, a service can rely on accountable evidence from an authorized
+source.
+
+## How the trust chain works
+
+1. **An organization is verified before it joins the data space.** Trusted
+   status comes from governed admission and authoritative evidence.
+2. **The organization verifies its employees and their qualifications.** It
+   also decides which employees may create, review or confirm each kind of
+   evidence.
+3. **An authorized employee creates evidence.** The Gateway checks the
+   organization, active assignment and exact permission before accepting it.
+4. **The requested disclosure is minimized.** A service can learn whether a
+   person is over 14, 16, 18, 19 or another policy-defined age while the birth
+   date and identity document remain private.
+5. **The evidence remains accountable.** Its issuer, proof, status and history
+   can be checked, expired or revoked while confidential content stays
+   protected.
+
+For example, the intended relying-party journey lets an online service request
+the required age predicate from an authorized evidence provider while the
+passport remains with its holder or authorized custodian.
+
+```text
+Person or organization
+        ↓
+Antifraud Portal → trusted portal backend → Antifraud Software Development Kit (SDK)
+        ↓
+Antifraud Gateway: identity + authority + policy + evidence
+        ↓
+Confidential storage + privacy-minimized integrity and audit record
+```
+
+## A cross-sector evidence model
+
+Antifraud uses a **JSON:API primary document**—a standard format for structured
+JavaScript Object Notation (JSON) application programming interface
+documents—as its canonical envelope. **Schema.org** types describe people,
+organizations, qualifications, documents, places and services in a language
+that different systems can understand.
+
+The description of a governed document may use Schema.org
+`DigitalDocument` and `MediaObject`. Portable Document Format (PDF) files,
+images, spreadsheets, videos and other confidential content travel as
+protected Decentralized Identity Communication (DIDComm) attachments and
+remain in authorized storage. The shared ledger receives only the minimum
+protected references required for integrity, status and audit.
+
+The model works across sectors. Each sector can connect through dedicated
+adapters while the JSON:API primary document remains the canonical Antifraud
+envelope.
+
+## Shared Data Space roadmap
+
+The complete Antifraud Data Space is designed as one connected trust network
+for social networks, marketplaces, insurers, schools, banks and other relying
+parties. Each request is limited to the evidence required for one declared
+purpose.
+
+For an age-assurance request, the end-to-end journey is:
+
+1. The relying party creates a confidential request limited by purpose,
+   audience, required predicate and expiry.
+2. Clearing House routes the request to the verified controller of the
+   individual or business through a private addressed exchange.
+3. The controller reviews who is asking, why and which claims are requested,
+   then approves, narrows or rejects the disclosure.
+4. The protected wallet creates a purpose-bound, audience-bound and expiring
+   verifiable presentation containing only the authorized claims or derived
+   predicates.
+5. Clearing House verifies and delivers the response. The relying party may
+   receive `age_over_18: true`, for example, while the source birth date,
+   passport and unrelated identity claims remain protected.
+6. The Gateway records the minimum protected status, integrity and audit
+   evidence needed to detect replay, expiry or revocation. Authorized stores
+   retain the confidential credentials and documents.
+
+The same journey applies to organization identity, employee authority,
+professional or educational qualifications, signed documents and verified
+services. An individual controller governs personal disclosure. A business
+controller governs organization evidence and delegates exact capabilities to
+verified employees. Verified assignments and controller policy establish each
+actor's authority.
+
+### Payment-provider adapters
+
+The Antifraud ecosystem will implement its own replaceable server-side payment
+adapters. This will allow an organization to integrate providers such as
+Stripe or compliant stablecoin payment rails through the same identity,
+evidence and authorization model used by the rest of the data space.
+
+A payment confirmation supplies evidence for one exact settlement. Identity,
+age, professional qualification, consent and organization authority retain
+their own evidence. Provider credentials and wallet keys stay in trusted
+server-side custody, private payment details stay with authorized providers,
+and the related transaction links only the minimum governed receipt or status.
+Payment adapters form part of the Shared Data Space roadmap.
+
+### Public repository ecosystem
+
+The project is split into small repositories with explicit ownership. Data
+contracts, trust decisions, user interfaces and infrastructure therefore
+evolve through clear, reviewable boundaries.
+
+| Repository | What it does | Why it matters |
+|---|---|---|
+| [antifraud-data-utils-ts](https://github.com/antifraudservices/antifraud-data-utils-ts) | Defines canonical Schema.org evidence, requests, predicates, presentations, proofs and lifecycle states. | Every service interprets identity, age and qualification evidence through the same interoperable claims. |
+| [antifraud-sdk-core-ts](https://github.com/antifraudservices/antifraud-sdk-core-ts) | Provides runtime-neutral orchestration for requests, authorization, presentations, delivery and status changes. | Browsers, servers and wallets can participate in the same governed journey and security policy. |
+| [antifraud-sdk-node-ts](https://github.com/antifraudservices/antifraud-sdk-node-ts) | Implements trusted Node.js and Backend for Frontend (BFF) adapters for wallets, verifiers, evidence providers and the Gateway. | Trusted server custody protects credentials and authority across portal interactions. |
+| [antifraud-ica-node-ts](https://github.com/antifraudservices/antifraud-ica-node-ts) | Verifies authoritative identity and organization evidence and issues signed credentials. | Independently checked organizations and identities establish the root of the trust chain. |
+| [antifraud-gw-node-ts](https://github.com/antifraudservices/antifraud-gw-node-ts) | Enforces authentication, organization and employee authority, confidential evidence handling, Clearing House routing and privacy-minimized audit. | Central policy enforcement gives every request server-verified authority and governed ledger routing. |
+| [antifraud-fabric](https://github.com/antifraudservices/antifraud-fabric) | Governs Hyperledger Fabric membership, channel topology, Chaincode as a Service (CCAAS) lifecycle and ledger-safe evidence anchors. | Participants can verify integrity, status and history while personal credentials and documents stay in confidential storage. |
+| [antifraud-common-components-react](https://github.com/antifraudservices/antifraud-common-components-react) | Supplies shared authentication, protected-profile and evidence controls. | Common security-sensitive interactions behave consistently across every portal. |
+| [antifraud-portal-components-react](https://github.com/antifraudservices/antifraud-portal-components-react) | Supplies reusable request, consent, wallet, presentation, attachment and evidence-review journeys. | Individuals and professionals receive consistent, understandable privacy choices across products. |
+| [antifraud-hosting-components-react](https://github.com/antifraudservices/antifraud-hosting-components-react) | Supplies organization and host-controller administration components. | Governance, workforce delegation and infrastructure operations remain visible and separate from professional work. |
+| [antifraud-controller-nextjs](https://github.com/antifraudservices/antifraud-controller-nextjs) | Lets verified organizations manage employees, groups, delegated capabilities and business evidence. | An organization can build an auditable chain from its verified identity to the exact employee allowed to create or review evidence. |
+| [antifraud-personal-next](https://github.com/antifraudservices/antifraud-personal-next) | Gives an individual controller access to requests, permissions, credentials, wallet actions and selective disclosure. | A person can approve only the required claim and keep the source credential or document private. |
+| [antifraud-professional-nextjs](https://github.com/antifraudservices/antifraud-professional-nextjs) | Provides authorized employee workspaces for evidence creation, review and professional decisions. | Professional actions remain bound to a verified organization, active assignment and exact delegated capability. |
+| [antifraud-social-demo-nextjs](https://github.com/antifraudservices/antifraud-social-demo-nextjs) | Demonstrates a synthetic social network acting as a relying party for governed requests and verifiable results. | It makes the real-world value visible: a platform can request trustworthy evidence while passports and birth dates stay with their authorized custodians. |
+
+The public repositories contain reviewable architecture and contracts.
+Controlled operational environments hold configuration, credentials,
+deployment records, release evidence and private participant data.
+
+The acceptance target is one automated journey across the real portal, BFF,
+high-level SDK, Gateway, confidential store and selected network adapter.
+Layer tests and portal demonstrations complement that shared end-to-end
+evidence.
+
+## What this repository provides
+
+This public repository contains the multidomain Gateway service and its
+executable contracts. The Gateway:
+
+- authenticates server-resolved organization and workforce actors;
+- enforces active assignments and exact capabilities;
+- records privacy-preserving identity and age-over evidence;
+- records qualification evidence while preserving employer and issuer
+  provenance as separate facts;
+- routes addressed evidence to the correct verified issuer for review;
+- stores confidential evidence and files in authorized repositories;
+- derives ledger routing from trusted server policy; and
+- maintains auditable evidence status and authoritative readback.
 
 ## Status
 
-The first executable in-memory contract is implemented. It authenticates a
-server-resolved workforce actor, records neutral employee identity evidence
-(including age-over predicates), records education qualification evidence,
-creates an addressed issuer inbox, accepts issuer decisions and maintains an
-authenticated organization-controller workspace. Unit and real HTTP
-integration tests cover these paths. An explicit staging demo profile uses the
-same API with a fixed six-second delay for each simulated ledger operation. No
-real Fabric adapter, local-network transaction or production readiness is
-claimed yet. A
-superseded historical gateway is not a compatibility baseline.
+The current education Minimum Viable Product (MVP) authenticates a
+server-resolved workforce actor,
+records neutral employee identity evidence including age-over predicates,
+records education qualification evidence, creates an addressed issuer inbox,
+accepts issuer decisions and maintains an authenticated
+organization-controller workspace. Automated unit and real Hypertext Transfer
+Protocol (HTTP) integration tests cover these paths.
 
-Before implementation, compare the current shared gateway implementation with
-the required Antifraud contracts. Reuse only neutral, test-proven managers and
-adapters. Do not inherit another application's tenants, hosts, channels,
-credentials or deployment evidence.
+The source includes official Hyperledger Fabric Gateway adapters and an
+explicit local-network gate for privacy-minimized identity and qualification
+anchors. The hosted Demo profile exercises the same application programming
+interface (API) with a clearly labelled six-second simulation. Local Network,
+Test Network and production each advance through their own evidence gates.
 
-The current MVP is limited to the identity federation required by education
-organizations and the complete `qualification-education-<zone>` evidence
-journey. Other evidence domains are outside this implementation.
+The current MVP focuses on identity federation for education organizations and
+the implemented `qualification-education-<zone>` evidence path. The Shared Data
+Space roadmap extends the same architecture across additional evidence
+domains.
+
+Some aspects of the architecture are patent pending.
 
 ## Fabric channel families
 
-In this repository, a channel means a Hyperledger Fabric channel. It does not
-mean a chat, message thread, department or user-interface communication
-channel.
+In this repository, a channel is a Hyperledger Fabric isolation boundary.
+Chats, message threads, departments and user-interface communications retain
+their own application-level models.
 
 The MVP uses:
 
@@ -42,23 +205,28 @@ The MVP uses:
 - `qualification-education-<zone>`: education qualifications and supporting
   evidence.
 
-Examples include `identity-eu`, `identity-na` and
-`qualification-education-eu`. A browser, portal or SDK request never selects a
-Fabric channel or smart contract.
+Here, `<zone>` identifies a governed federation region. Examples include
+`identity-eu` for Europe, `identity-na` for North America and
+`qualification-education-eu` for education qualifications in Europe. Trusted
+Gateway policy selects the applicable Fabric channel and smart contract for
+each authorized request.
 
-## Evidence and CCAAS
+## Evidence and Chaincode as a Service
 
-For the MVP, `evidence-sc` must be evaluated for `identity-global` identity
-evidence and for the approved `qualification-education-<zone>` channels.
-The current implementation uses in-memory adapters only. Automated `test`
-operations are immediate. The explicitly enabled staging demo uses the same
-adapters with a fixed 6000 ms delay. `local-network`, `test-network` and
-`network` resolve to a real-Fabric requirement and are rejected by the demo
-server. Fabric keeps
-independent state in each channel, so peer membership, lifecycle approval,
-commitment, endorsement policy and authoritative readback remain required
-before any local-network claim. Future evidence domains repeat that process in
-a later increment.
+For the Minimum Viable Product, the `evidence-sc` evidence smart contract must
+be evaluated for `identity-global` identity evidence and for the approved
+`qualification-education-<zone>` channels.
+Automated `test` operations use immediate in-memory adapters. The explicitly
+enabled staging Demo uses the same contract with a fixed 6000 ms delay and is
+always labelled as simulated. `local-network`, `test-network` and `network`
+select the official Fabric Gateway adapter and require explicit trusted server
+configuration. The repository includes an unskipped local-network test for
+the current identity and qualification anchors. Test Network and production
+deployment follow their corresponding promotion gates. Fabric keeps
+independent state in each channel, so peer
+membership, lifecycle approval, commitment, endorsement policy and
+authoritative readback remain separate requirements. Future evidence domains
+repeat that process in a later increment.
 
 ## Application boundary
 
@@ -73,13 +241,17 @@ approval remain separate workflows.
 Antifraud document persistence is Schema.org-native: `DigitalDocument` plus
 `MediaObject`. PDF, spreadsheet, Word, image, video and other governed bytes
 arrive through DIDComm `attachments[]` and are stored only in confidential
-artifact storage. They are never FHIR `DocumentReference` resources and never
-enter Fabric. Gateway implementation is tracked in
+artifact storage. The JSON:API primary document and Schema.org resources keep
+the Antifraud business model canonical, while Fabric receives protected
+integrity references. Gateway implementation is tracked in
 [GitHub issue #1](https://github.com/antifraudservices/antifraud-gw-node-ts/issues/1).
-The controller reuses controlled components but never selects ledger channels
-or grants authority in browser state.
+The controller uses controlled components while trusted server policy selects
+ledger routing and establishes authority.
 
-## Implemented HTTP surface
+## Implemented Hypertext Transfer Protocol routes
+
+The routes below use `GET` to read information and `POST` to submit new
+information or decisions.
 
 - `GET /v1/controller/workspace` reads authoritative organization, licence,
   workforce, structure, authorization and notification state.
@@ -90,42 +262,47 @@ or grants authority in browser state.
 - `POST /v1/controller/places` and `POST /v1/controller/services` create
   Schema.org Place and Service records for the authenticated organization.
   Their catalog-publication routes require `controller.catalog.publish` and
-  reject a public Service unless every referenced Place is public and belongs
-  to the same department.
+  publish a Service after every referenced Place is public and belongs to the
+  same department.
 - `GET /v1/controller/service-catalog` gives the authenticated controller the
   current catalog, while
   `GET /v1/public/organization-service-catalog/:organizationReference` exposes
-  only the explicitly public graph. Jurisdiction, sector and access URL come
-  from trusted server configuration.
+  only the explicitly public graph. Jurisdiction, sector and access web address
+  come from trusted server configuration.
 - `POST /v1/identity/evidence` records a canonical neutral identity-evidence
   statement and a privacy-minimized `identity-global` anchor.
 - `POST /v1/education/qualification-evidence` records an employer attestation
   and derives `qualification-education-<zone>` from governed jurisdiction. Its
-  `documentCid` is the complete CIDv1(raw, SHA3-384) multibase base58btc value;
-  malformed or profile-mismatched content identifiers fail before any vault,
-  index or ledger write. Issuer lookup returns one explicit outcome:
+  `documentCid` is the complete Content Identifier version 1 (CIDv1) value for
+  raw content using the 384-bit Secure Hash Algorithm 3 (SHA3-384), encoded as
+  multibase base58btc; validation completes before the vault, index or ledger
+  write. Issuer lookup returns one explicit outcome:
   `participant-resolved`, `identity-resolved` or `not-resolved`. Only the first
   contains both a tenant and confirmation service; the second remains
-  `awaiting-issuer-onboarding`, and the third fails closed before persistence.
+  `awaiting-issuer-onboarding`, and the third requires authoritative resolution
+  before persistence.
 - `GET /v1/clearing-house/inbox` lists only references addressed to the
   authenticated issuer organization.
 - `GET /v1/clearing-house/evidence/:id` opens the confidential employer
-  attestation only for that addressed issuer. It does not copy classification
-  values into the inbox index or Fabric anchor.
+  attestation for that addressed issuer. The inbox index and Fabric anchor
+  retain privacy-minimized routing and integrity references.
 - `POST /v1/clearing-house/evidence/:id/decision` records an addressed issuer
   confirmation, rejection or revocation.
 
-These routes are currently proven with in-memory adapters. A staging demo can
-exercise them with the six-second simulation, but it is not Fabric or Test
-Network evidence.
+These routes have automated in-memory contract coverage. The dedicated
+local-network gate separately proves the current privacy-minimized identity
+and qualification anchors through the Fabric adapter. The staging Demo
+exercises the application routes with a clearly labelled six-second simulation;
+promotion to Local Network and Test Network adds the corresponding network
+evidence.
 
-`GET /healthz` is an unauthenticated liveness check and returns no tenant,
-actor or ledger state. `test/local-controller-gateway-server.mjs` is the
+`GET /healthz` reports service liveness. `test/local-controller-gateway-server.mjs` is the
 synthetic fixture used by controller Playwright and the temporary staging-demo
-entry point. It fails closed when configured for `local-network`, Test Network
-or production.
+entry point. In `test` and Demo it uses the explicitly labelled memory adapter;
+in `local-network` it uses the configured Fabric connection. Test Network and
+production use their promoted service profiles.
 
-Run that staging demo only with:
+Run the staging Demo with:
 
 ```bash
 ANTIFRAUD_DEPLOYMENT_STAGE=staging \
@@ -133,8 +310,8 @@ ANTIFRAUD_DEMO_MODE=true \
 npm run start:demo
 ```
 
-The interactive local controller portal must instead use the real Fabric
-server selected by `ANTIFRAUD_NETWORK_KIND=local-network` after its adapter and
+The interactive Local Network controller portal uses the Fabric server selected
+by `ANTIFRAUD_NETWORK_KIND=local-network` after its adapter and
 restart-readback gate are green.
 
 ## Implementation entry point
@@ -146,10 +323,11 @@ before adding code.
 
 ## Public-repository boundary
 
-Do not commit internal prompts, operator or partner identities, real hosts,
-credentials, private organization evidence, personal data, commercial plans or
-unpublished deployment details. Use synthetic fixtures and public contracts.
+Public contributions use synthetic fixtures and public contracts. Internal
+prompts, operator or partner identities, real hosts, credentials, private
+organization evidence, personal data, commercial plans and unpublished
+deployment details remain in their controlled environments.
 
 ## Licence
 
-Licensed under Apache-2.0.
+Copyright 2026 Antifraud Services Inc. Licensed under Apache-2.0.
