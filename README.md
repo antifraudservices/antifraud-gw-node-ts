@@ -74,6 +74,14 @@ Antifraud Gateway: identity + authority + policy + evidence
 Confidential storage + privacy-minimized integrity and audit record
 ```
 
+## Cybersecurity foundation
+
+Antifraud Data Space builds on previous cybersecurity research and
+prototype development. The underlying cybersecurity concepts were first
+documented in [SOSChain](https://github.com/soschain/docs). Antifraud now
+applies the same concepts to identity, qualifications, invoices and other use
+cases beyond emergencies and animal health.
+
 ## A cross-sector evidence model
 
 Antifraud uses a **JSON:API primary document**—a standard format for structured
@@ -233,7 +241,7 @@ have already been analysed or completed.
 | Clearing House federation | Complete private discovery and routing between relying parties, individual or business controllers, evidence providers and participating organizations. | Requests and responses must reach the correct verified party without becoming a public directory of personal activity. |
 | Wallet and protected documents | Complete interoperable wallet custody, recovery, encrypted attachments, consent records and portable presentations. | People and organizations must remain in control of confidential credentials and documents. |
 | Payment adapters | Build the planned replaceable adapters for providers such as Stripe and compliant stablecoin payment rails, with separate settlement evidence and server-side key custody. | Payments can support a governed service without becoming identity or authority evidence themselves. |
-| Security and privacy hardening | Complete threat modelling, abuse controls, key rotation and recovery, replay protection, data-retention rules, incident response and independent security review. | The system handles high-impact evidence and must fail safely under attack or operational failure. |
+| Complete cybersecurity profile | Implement and prove the complete Financial-grade API and signed and encrypted DIDComm journey, including ML-DSA signatures, ML-KEM-768 multi-recipient protection, tenant key isolation, key rotation and recovery, replay protection and external key-management custody. Complete threat modelling, abuse controls, data-retention rules, incident response and independent security review. | High-impact evidence must remain confidential and verifiable in transit, at rest and across untrusted channels, and the system must fail safely under attack or operational failure. |
 | Complete test strategy and coverage | Design and implement the full unit, integration, contract and real end-to-end test suite for every journey, permission, failure outcome, adapter and lifecycle transition. Define coverage targets and add negative authorization, recovery, performance and accessibility tests. | The current preliminary checks do not prove the complete product; each promised capability must have repeatable evidence that it works and rejects unauthorized use. |
 | Network and operational proof | Prove each increment through local, local-network, test-network and production-readiness gates, including monitoring, backup, recovery and participant runbooks. | Source code alone does not prove that a governed multi-organization network can operate reliably. |
 | Integrator experience | Complete plain-language documentation, application programming interface examples, software development kit examples and reference journeys for every supported participant role. | New organizations must be able to understand, evaluate and integrate the system without relying on private project knowledge. |
