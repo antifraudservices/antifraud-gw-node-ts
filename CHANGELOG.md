@@ -10,7 +10,9 @@
   use plain language, expand regional and technical abbreviations, and make
   clear that creating the detailed cross-repository backlog, completing the
   test strategy and extending to other sectors are substantial work still to
-  be done.
+  be done. Open with the submitted project description, including the Global
+  Unified Data Index, verified invoices, gaming companies and the concise
+  patent-pending notice.
 
 - Add controller-managed Schema.org Place and client Service records with
   explicit public-catalog publication. Publish only a server-configured DCAT
