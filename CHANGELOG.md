@@ -12,7 +12,9 @@
   test strategy and extending to other sectors are substantial work still to
   be done. Open with the submitted project description, including the Global
   Unified Data Index, verified invoices, gaming companies and the concise
-  patent-pending notice.
+  patent-pending notice. Add a concise cybersecurity foundation linked to the
+  concepts documented in SOSChain, while retaining the full Financial-grade
+  API, DIDComm and post-quantum profile as development work.
 
 - Add controller-managed Schema.org Place and client Service records with
   explicit public-catalog publication. Publish only a server-configured DCAT
