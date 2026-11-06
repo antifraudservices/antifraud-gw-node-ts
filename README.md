@@ -35,9 +35,9 @@ source.
    evidence.
 3. **An authorized employee creates evidence.** The Gateway checks the
    organization, active assignment and exact permission before accepting it.
-4. **The requested disclosure is minimized.** A service can learn whether a
-   person is over 14, 16, 18, 19 or another policy-defined age while the birth
-   date and identity document remain private.
+4. **The requested disclosure is minimized.** A service can ask for and verify
+   evidence that a person is over 14, 16, 18, 19 or another policy-defined age
+   while the birth date and identity document remain private.
 5. **The evidence remains accountable.** Its issuer, proof, status and history
    can be checked, expired or revoked while confidential content stays
    protected.
@@ -209,7 +209,7 @@ have already been analysed or completed.
 | Area | Work still to be developed | Why it matters |
 |---|---|---|
 | Detailed backlog | Analyse the architecture and repositories, break every workstream into reviewable tasks, identify dependencies, define acceptance criteria and prioritize delivery. | The project needs an executable development plan rather than a list of broad intentions. |
-| Complete selective-disclosure journey | Complete the request, controller approval, minimum-data presentation, Clearing House verification, delivery, expiry and revocation journey across the portals, software development kits and Gateway. | A service should receive only the necessary answer, such as whether a person is over an agreed age, without receiving the birth date or identity document. |
+| Complete selective-disclosure journey | Complete the request, controller approval, minimum-data presentation, Clearing House verification, delivery, expiry and revocation journey across the portals, software development kits and Gateway. | A service should be able to ask for and verify only the necessary answer, such as whether a person is over an agreed age, without receiving the birth date or identity document. |
 | More kinds of evidence | Extend the current age and education foundation to organization identity, employee authority, professional qualifications, licences, signed documents, verified services and other governed facts. | Fraud is not limited to one claim or one sector. |
 | More sectors and regions | Define each new sector's rules, evidence types, trusted issuers, regional policies and dedicated adapters without changing the common evidence envelope. | The same trust model must support different industries while keeping their governance and data separate. |
 | Organization admission and governance | Complete verified participant onboarding, employee delegation, controller changes, suspension, offboarding, dispute handling and audit procedures. | Every piece of evidence is only as trustworthy as the organization and authorized person behind it. |
