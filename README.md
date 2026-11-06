@@ -82,6 +82,10 @@ for social networks, marketplaces, insurers, schools, banks and other relying
 parties. Each request is limited to the evidence required for one declared
 purpose.
 
+The journey below is the product target. The current repository implements
+only part of it; completing and proving the whole journey is a central part of
+the work still to be planned and developed.
+
 For an age-assurance request, the end-to-end journey is:
 
 1. The relying party creates a confidential request limited by purpose,
@@ -152,10 +156,10 @@ high-level SDK, Gateway, confidential store and selected network adapter.
 Layer tests and portal demonstrations complement that shared end-to-end
 evidence.
 
-## What this repository provides
+## Current foundation in this repository
 
-This public repository contains the multidomain Gateway service and its
-executable contracts. The Gateway:
+This public repository is a working foundation for the multidomain Gateway,
+not a finished Antifraud Data Space. Its current executable contracts:
 
 - authenticates server-resolved organization and workforce actors;
 - enforces active assignments and exact capabilities;
@@ -167,7 +171,7 @@ executable contracts. The Gateway:
 - derives ledger routing from trusted server policy; and
 - maintains auditable evidence status and authoritative readback.
 
-## Status
+## What works today
 
 The current education Minimum Viable Product (MVP) authenticates a
 server-resolved workforce actor,
@@ -175,7 +179,8 @@ records neutral employee identity evidence including age-over predicates,
 records education qualification evidence, creates an addressed issuer inbox,
 accepts issuer decisions and maintains an authenticated
 organization-controller workspace. Automated unit and real Hypertext Transfer
-Protocol (HTTP) integration tests cover these paths.
+Protocol (HTTP) integration tests provide initial checks for these paths, but
+they are not the complete test suite required for the Shared Data Space.
 
 The source includes official Hyperledger Fabric Gateway adapters and an
 explicit local-network gate for privacy-minimized identity and qualification
@@ -183,12 +188,44 @@ anchors. The hosted Demo profile exercises the same application programming
 interface (API) with a clearly labelled six-second simulation. Local Network,
 Test Network and production each advance through their own evidence gates.
 
-The current MVP focuses on identity federation for education organizations and
-the implemented `qualification-education-<zone>` evidence path. The Shared Data
-Space roadmap extends the same architecture across additional evidence
-domains.
+The current MVP is deliberately narrow. It starts with identity and age-over
+evidence for employees and qualification evidence for education
+organizations. It proves that the basic trust chain can work, but it does not
+yet provide the complete cross-sector product described above.
 
 Some aspects of the architecture are patent pending.
+
+## Work still to be planned and developed
+
+Substantial work remains. The next development stages must turn the current
+foundation into a complete Shared Data Space that organizations and online
+services can use safely at scale.
+
+The detailed development backlog has not yet been created. Defining,
+prioritizing and maintaining that backlog is itself a major part of the work.
+The following are high-level workstreams, not a claim that the required tasks
+have already been analysed or completed.
+
+| Area | Work still to be developed | Why it matters |
+|---|---|---|
+| Detailed backlog | Analyse the architecture and repositories, break every workstream into reviewable tasks, identify dependencies, define acceptance criteria and prioritize delivery. | The project needs an executable development plan rather than a list of broad intentions. |
+| Complete selective-disclosure journey | Complete the request, controller approval, minimum-data presentation, Clearing House verification, delivery, expiry and revocation journey across the portals, software development kits and Gateway. | A service should receive only the necessary answer, such as whether a person is over an agreed age, without receiving the birth date or identity document. |
+| More kinds of evidence | Extend the current age and education foundation to organization identity, employee authority, professional qualifications, licences, signed documents, verified services and other governed facts. | Fraud is not limited to one claim or one sector. |
+| More sectors and regions | Define each new sector's rules, evidence types, trusted issuers, regional policies and dedicated adapters without changing the common evidence envelope. | The same trust model must support different industries while keeping their governance and data separate. |
+| Organization admission and governance | Complete verified participant onboarding, employee delegation, controller changes, suspension, offboarding, dispute handling and audit procedures. | Every piece of evidence is only as trustworthy as the organization and authorized person behind it. |
+| Clearing House federation | Complete private discovery and routing between relying parties, individual or business controllers, evidence providers and participating organizations. | Requests and responses must reach the correct verified party without becoming a public directory of personal activity. |
+| Wallet and protected documents | Complete interoperable wallet custody, recovery, encrypted attachments, consent records and portable presentations. | People and organizations must remain in control of confidential credentials and documents. |
+| Payment adapters | Build the planned replaceable adapters for providers such as Stripe and compliant stablecoin payment rails, with separate settlement evidence and server-side key custody. | Payments can support a governed service without becoming identity or authority evidence themselves. |
+| Security and privacy hardening | Complete threat modelling, abuse controls, key rotation and recovery, replay protection, data-retention rules, incident response and independent security review. | The system handles high-impact evidence and must fail safely under attack or operational failure. |
+| Complete test strategy and coverage | Design and implement the full unit, integration, contract and real end-to-end test suite for every journey, permission, failure outcome, adapter and lifecycle transition. Define coverage targets and add negative authorization, recovery, performance and accessibility tests. | The current preliminary checks do not prove the complete product; each promised capability must have repeatable evidence that it works and rejects unauthorized use. |
+| Network and operational proof | Prove each increment through local, local-network, test-network and production-readiness gates, including monitoring, backup, recovery and participant runbooks. | Source code alone does not prove that a governed multi-organization network can operate reliably. |
+| Integrator experience | Complete plain-language documentation, application programming interface examples, software development kit examples and reference journeys for every supported participant role. | New organizations must be able to understand, evaluate and integrate the system without relying on private project knowledge. |
+
+This future backlog must span the public Antifraud repositories listed above.
+Each increment should add its contracts, implementation, documentation and
+automated proof together. The aim is not to claim that the full Data Space or
+its delivery plan already exists, but to make the starting foundation and the
+scale of the remaining work visible and reviewable.
 
 ## Fabric channel families
 
