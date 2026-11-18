@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+- Add optional authenticated presentation and Gaia-X compliance-result
+  verification managers and HTTP routes. Require registered holder and issuer
+  signatures, current workforce/group authority, exact resource-use policy,
+  credential state and atomic replay consumption. Verify the external
+  compliance engine's signed Standard Compliance credential against the
+  configured rules and exact submitted credential coverage. Keep clinical
+  transport out of the neutral gateway and leave Demo composition unchanged.
+
 - Rewrite the public README around the Antifraud Data Space mission, human and
   business impact, organization-based trust chain, privacy-minimized age
   assurance, cross-sector JSON:API and Schema.org architecture, Shared Data
@@ -13,7 +21,7 @@
   be done. Open with the submitted project description, including the Global
   Unified Data Index, verified invoices, gaming companies and the concise
   patent-pending notice. Add a concise cybersecurity foundation linked to the
-  concepts documented in SOSChain, while retaining the full Financial-grade
+  concepts documented in the neutral emergency-data architecture, while retaining the full Financial-grade
   API, DIDComm and post-quantum profile as development work.
 
 - Add controller-managed Schema.org Place and client Service records with

@@ -251,6 +251,50 @@ and local through Test Network evidence. Record every capability as adopted,
 already equivalent, profile-specific or rejected. Never merge an entire
 product branch or inherit its identities and deployment configuration.
 
+### Selective verification synchronization
+
+The verification increment follows the reviewed GW CORE 1.26.1 contract
+(source integration `83b79c4fb25976d79bc82620058c55e0d2f4ccd7`) without
+inheriting its application model or deployment identity.
+
+| Contract | Disposition | Neutral owner |
+| --- | --- | --- |
+| Pinned signature, JOSE policy and exact request digest | adopted | `antifraud-data-utils-ts/clearing-house` |
+| Active registered holder, workforce assignment, group authorization and exact use permission | profile-specific | `CredentialPresentationAuthority` and `CredentialPresentationVerifier` |
+| Current issuer trust, credential state and single-use presentation | adopted | required authority and replay ports |
+| Signed Gaia-X Standard Compliance result, explicit rules and exact credential coverage | adopted | `GaiaXSubmissionAuthority` and `GaiaXComplianceVerifier` |
+| Signed tenant endpoint and receipt primitives | already-equivalent | shared neutral tenant trust and receipt contracts |
+| Clinical SMART token and EHR transport | profile-specific | outside the education-qualification gateway |
+| FHIR resource and clinical manager imports | rejected | canonical resources remain Schema.org and JSON:API |
+
+`CredentialPresentationAuthority` reads the current holder registration, actor,
+issuer, credential state and permitted resource use. An unavailable provider,
+unknown issuer or incomplete policy is a denial. The authorization is bound to
+the authenticated tenant, organization, employee, active assignment and exact
+controller-authorized group. The presentation signs the nonce and digest of
+its requested resource, jurisdiction and verification capability.
+
+`PresentationReplayStore.consume` must be atomic. Memory implementations are
+valid only for the memory test profile. A multi-replica Fabric profile must
+supply durable shared replay storage and current Fabric-backed authority.
+Configured provider names do not constitute proof of channel activity; actual
+Fabric readback and runtime acceptance remain separate gates.
+
+`GaiaXSubmissionAuthority` resolves current tenant signing keys and the approved
+engine for an authenticated verifier. The adapter sends the signed VP using
+`application/vp+jwt` and accepts only `application/vc+jwt`. It rechecks current
+authority after the engine responds, then validates the pinned engine
+signature, Standard Compliance label, configured rule version, validity and
+exact credential ID/digest coverage. It preserves the engine's signed
+credential. No nonce is invented for this external Standard Compliance
+credential profile; the separate tenant Clearing House request/receipt
+protocol retains its nonce and authorization-context binding requirements.
+
+The public HTTP composition enables neither verification operation unless its
+manager is supplied explicitly. The Demo entry point retains its existing
+scope. No external-engine availability, production deployment or ledger write
+is inferred from local composition tests.
+
 ## Organization service-catalog boundary
 
 The controller owns organization structure, including departments, employee

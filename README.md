@@ -376,6 +376,34 @@ The interactive Local Network controller portal uses the Fabric server selected
 by `ANTIFRAUD_NETWORK_KIND=local-network` after its adapter and
 restart-readback gate are green.
 
+## Credential and compliance verification
+
+The gateway exposes two optional, protected verification operations:
+
+- `POST /v1/clearing-house/presentations/verify` accepts a signed presentation
+  and its exact `request` (`nonce`, `resourceReference`, `jurisdiction`,
+  `capability`). It verifies the registered device and issuer signatures,
+  rereads current workforce, credential and permission records, and consumes
+  the presentation once. The capability is `identity.claim.verify`.
+- `POST /v1/clearing-house/gaia-x/verify` accepts one tenant-signed
+  `presentation`. Its configured external engine performs Gaia-X rule checks;
+  the gateway verifies the engine's signed Standard Compliance credential,
+  rules version, validity and exact submitted credential identifiers and hashes.
+
+Both operations authenticate the caller before verification. The server owns
+keys, issuer trust, actor identity and endpoint selection; those values cannot
+be supplied by the HTTP body. A valid login or signature alone is insufficient.
+A withdrawn assignment, revoked credential, disabled device or denied use
+fails closed. The Gaia-X adapter is not itself a compliance engine.
+
+A runtime must explicitly supply current authority repositories and replay
+storage when composing these operations. They have no positive default or
+Demonstration bypass. Memory authority and process-local replay are limited to
+`test`; Fabric profiles require Fabric authority and durable replay storage.
+The existing Demo server does not automatically enable either operation.
+Local signed HTTP evidence does not establish a production engine connection
+or a Fabric write.
+
 ## Implementation entry point
 
 Read [the architecture contract](docs/ARCHITECTURE.md), [AGENTS.md](AGENTS.md)

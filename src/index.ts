@@ -1,3 +1,5 @@
+import type {GaiaXComplianceVerifier} from './gaia-x-compliance-verification.js'
+import type {CredentialPresentationVerifier, CredentialPresentationRequest} from './credential-presentation-verification.js'
 import type { IncomingMessage, RequestListener, ServerResponse } from 'node:http'
 import { createHash } from 'node:crypto'
 import type { OrganizationControllerGateway } from './controller-administration.js'
@@ -15,6 +17,8 @@ import {
   type SocialPublicationContent,
 } from 'antifraud-data-utils-ts'
 import type {SocialPublicationDemoGateway} from './social-publication-demo.js'
+export * from './gaia-x-compliance-verification.js'
+export * from './credential-presentation-verification.js'
 export * from './controller-administration.js'
 export * from './demo-persistence.js'
 export * from './demo-runtime.js'
@@ -589,6 +593,8 @@ export function createAntifraudGatewayHttpHandler(input: {
   controller?: OrganizationControllerGateway
   artifacts?: ConfidentialArtifactRepository
   publications?: SocialPublicationDemoGateway
+  presentationVerifier?: CredentialPresentationVerifier
+  gaiaXVerifier?: GaiaXComplianceVerifier
   resolveActor: (bearerCredential: string) => Promise<WorkforceActor | undefined>
 }): RequestListener {
   return (request, response) => {
@@ -602,6 +608,8 @@ async function handleGatewayRequest(
     controller?: OrganizationControllerGateway
     artifacts?: ConfidentialArtifactRepository
     publications?: SocialPublicationDemoGateway
+    presentationVerifier?: CredentialPresentationVerifier
+    gaiaXVerifier?: GaiaXComplianceVerifier
     resolveActor: (bearerCredential: string) => Promise<WorkforceActor | undefined>
   },
   request: IncomingMessage,
@@ -627,6 +635,28 @@ async function handleGatewayRequest(
     const actor = bearerCredential ? await input.resolveActor(bearerCredential) : undefined
     if (!actor) {
       writeJson(response, 401, { error: 'Authentication is required.' })
+      return
+    }
+
+    if (request.method === 'POST' && url.pathname === '/v1/clearing-house/gaia-x/verify') {
+      if (!input.gaiaXVerifier) throw new Error('GXDCH result verification is not configured.')
+      const body = await readJsonObject(request)
+      if (Object.keys(body).some(key => key !== 'presentation')) {
+        throw new Error('Only the tenant presentation is accepted; GXDCH trust is server-owned.')
+      }
+      writeJson(response, 200, await input.gaiaXVerifier.verify({actor, presentation: body.presentation as string}))
+      return
+    }
+
+    if (request.method === 'POST' && url.pathname === '/v1/clearing-house/presentations/verify') {
+      if (!input.presentationVerifier) throw new Error('Presentation verification is not configured.')
+      const body = await readJsonObject(request)
+      if (Object.keys(body).some(key => !['request', 'presentation'].includes(key))) {
+        throw new Error('Only presentation and its exact request are accepted; authority is server-owned.')
+      }
+      writeJson(response, 200, await input.presentationVerifier.verify({
+        actor, request: body.request as CredentialPresentationRequest, presentation: body.presentation as string,
+      }))
       return
     }
 
