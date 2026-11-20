@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Expose independent controller reads for organization, employees, licences,
+  devices, invitations, departments, groups and notifications. Employee reads
+  support exact email, role and employee-reference filters.
+
 - Add optional authenticated presentation and Gaia-X compliance-result
   verification managers and HTTP routes. Require registered holder and issuer
   signatures, current workforce/group authority, exact resource-use policy,
