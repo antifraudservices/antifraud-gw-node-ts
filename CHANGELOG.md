@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Pin the published credential and controller SDK contracts required by the
+  gateway so the locked dependency tree builds in the deployment image.
+
 - Expose independent controller reads for organization, employees, licences,
   devices, invitations, departments, groups and notifications. Employee reads
   support exact email, role and employee-reference filters.
