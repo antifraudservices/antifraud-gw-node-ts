@@ -1,3 +1,4 @@
+import { CONTROLLER_READ_RESOURCES, ControllerAccessDenied } from './controller-administration.js'
 import type {GaiaXComplianceVerifier} from './gaia-x-compliance-verification.js'
 import type {CredentialPresentationVerifier, CredentialPresentationRequest} from './credential-presentation-verification.js'
 import type { IncomingMessage, RequestListener, ServerResponse } from 'node:http'
@@ -658,6 +659,30 @@ async function handleGatewayRequest(
         actor, request: body.request as CredentialPresentationRequest, presentation: body.presentation as string,
       }))
       return
+    }
+
+    if (request.method === 'GET') {
+      const resource = CONTROLLER_READ_RESOURCES.find(value => url.pathname === `/v1/controller/${value}`)
+      if (resource) {
+        if (!input.controller) {
+          writeJson(response, 501, { error: 'Controller administration is not configured.' })
+          return
+        }
+        const allowedFilters = resource === 'employees' ? ['email', 'role', 'reference'] : resource === 'devices' ? ['reference'] : []
+        if ([...url.searchParams.keys()].some(key => !allowedFilters.includes(key) || url.searchParams.getAll(key).length !== 1 || !url.searchParams.get(key)?.trim())) {
+          writeJson(response, 400, { error: 'Invalid controller resource filter.' })
+          return
+        }
+        try {
+          const data = await input.controller.readResource({ actor, resource, filters: Object.fromEntries(url.searchParams) })
+          response.setHeader('Cache-Control', 'no-store')
+          writeJson(response, 200, data)
+        } catch (error) {
+          if (!(error instanceof ControllerAccessDenied)) throw error
+          writeJson(response, 403, { error: 'Controller access is required.' })
+        }
+        return
+      }
     }
 
     if (request.method === 'GET' && url.pathname === '/v1/controller/workspace') {

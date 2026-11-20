@@ -155,9 +155,16 @@ test('completes the authenticated HTTP evidence and issuer-decision journey', as
 
   const createdDepartment = await jsonRequest(`${baseUrl}/v1/controller/departments`, 'POST', 'controller-token', {name: 'Operations'})
   assert.equal(createdDepartment.response.status, 201)
-  const state = await jsonRequest(`${baseUrl}/v1/controller/workspace`, 'GET', 'controller-token')
+  const state = await jsonRequest(`${baseUrl}/v1/controller/departments`, 'GET', 'controller-token')
   assert.equal(state.response.status, 200)
-  assert.equal(state.body.departments[0].name, 'Operations')
+  assert.equal(state.body[0].name, 'Operations')
+  const denied = await jsonRequest(`${baseUrl}/v1/controller/employees`, 'GET', 'employer-token')
+  assert.equal(denied.response.status, 403)
+  const invalid = await jsonRequest(`${baseUrl}/v1/controller/employees?organizationReference=other`, 'GET', 'controller-token')
+  assert.equal(invalid.response.status, 400)
+  const employees = await jsonRequest(`${baseUrl}/v1/controller/employees?email=missing%40example.invalid`, 'GET', 'controller-token')
+  assert.equal(employees.response.status, 200)
+  assert.deepEqual(employees.body, [])
   const createdPlace = await jsonRequest(`${baseUrl}/v1/controller/places`, 'POST', 'controller-token', {
     name: 'Public service point', departmentReference: createdDepartment.body.department.reference,
     geo: {latitude: 49.28, longitude: -123.12},

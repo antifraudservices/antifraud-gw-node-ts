@@ -315,8 +315,12 @@ ledger routing and establishes authority.
 The routes below use `GET` to read information and `POST` to submit new
 information or decisions.
 
-- `GET /v1/controller/workspace` reads authoritative organization, licence,
-  workforce, structure, authorization and notification state.
+- Read authoritative state independently through
+  `GET /v1/controller/organization`, `/employees`, `/licences`, `/devices`,
+  `/invitations`, `/departments`, `/groups` and `/notifications`.
+  Employee filters are `email`, `role` and `reference`. Filter device
+  assignments by employee `reference`.
+- Older clients can use `GET /v1/controller/workspace` during migration.
 - Controller department, group, invitation, acceptance, employee membership,
   status and purge routes mutate only the authenticated organization and
   return state that can be read after gateway reconstruction over the same

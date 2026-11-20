@@ -74,6 +74,10 @@ export type ControllerWorkspaceState = Readonly<{
   notifications: readonly ControllerNotification[]
 }>
 
+export const CONTROLLER_READ_RESOURCES = ['organization', 'licences', 'departments', 'groups', 'invitations', 'employees', 'devices', 'notifications'] as const
+export type ControllerReadResource = typeof CONTROLLER_READ_RESOURCES[number]
+export class ControllerAccessDenied extends Error {}
+
 export type ControllerWorkspacePersistenceState = {
   organization: ControllerOrganization
   licenceTotal: number
@@ -136,6 +140,29 @@ export class OrganizationControllerGateway {
   async readWorkspace(input: { actor: WorkforceActor }): Promise<ControllerWorkspaceState> {
     requireController(input.actor, 'controller.organization.read')
     return project(await this.#state(input.actor))
+  }
+
+  async readResource(input: {
+    actor: WorkforceActor
+    resource: ControllerReadResource
+    filters?: { email?: string; role?: string; reference?: string }
+  }) {
+    requireController(input.actor, 'controller.organization.read')
+    const state = await this.#state(input.actor)
+    if (input.resource === 'licences') return licenceSummary(state)
+    if (input.resource === 'devices') {
+      return state.employees
+        .filter(employee => !input.filters?.reference || employee.reference === input.filters.reference)
+        .map(({ reference, deviceReferences }) => ({ employeeReference: reference, deviceReferences: [...deviceReferences] }))
+    }
+    if (input.resource === 'employees') {
+      const { email, role, reference } = input.filters ?? {}
+      return state.employees
+        .filter(employee => (!reference || employee.reference === reference)
+          && (!email || normalize(employee.email) === normalize(email)) && (!role || employee.role === role))
+        .map(({ deviceReferences: _, ...employee }) => structuredClone(employee))
+    }
+    return structuredClone(state[input.resource])
   }
 
   async createDepartment(input: { actor: WorkforceActor; name: string; organizationReference?: unknown }): Promise<{ department: ControllerDepartment }> {
@@ -427,10 +454,10 @@ export class OrganizationControllerGateway {
 }
 
 function requireController(actor: WorkforceActor, capability: string): void {
-  if (!actor.active) throw new Error('An active controller assignment is required.')
-  if (!actor.organizationReference?.trim()) throw new Error('A trusted organization reference is required.')
-  if (!actor.groupReferences.length) throw new Error('An active controller group membership is required.')
-  if (!actor.capabilities.includes(capability)) throw new Error(`The ${capability} capability is required.`)
+  if (!actor.active) throw new ControllerAccessDenied('An active controller assignment is required.')
+  if (!actor.organizationReference?.trim()) throw new ControllerAccessDenied('A trusted organization reference is required.')
+  if (!actor.groupReferences.length) throw new ControllerAccessDenied('An active controller group membership is required.')
+  if (!actor.capabilities.includes(capability)) throw new ControllerAccessDenied(`The ${capability} capability is required.`)
 }
 
 function rejectOrganizationSelection(input: { organizationReference?: unknown }): void {
@@ -517,11 +544,15 @@ function assignedCount(state: ControllerWorkspacePersistenceState): number {
   return state.employees.length + state.invitations.filter(item => item.status === 'pending').length + 1
 }
 
-function project(state: ControllerWorkspacePersistenceState): ControllerWorkspaceState {
+function licenceSummary(state: ControllerWorkspacePersistenceState) {
   const assigned = assignedCount(state)
+  return { total: state.licenceTotal, assigned, free: Math.max(0, state.licenceTotal - assigned) }
+}
+
+function project(state: ControllerWorkspacePersistenceState): ControllerWorkspaceState {
   return structuredClone({
     organization: state.organization,
-    licences: { total: state.licenceTotal, assigned, free: Math.max(0, state.licenceTotal - assigned) },
+    licences: licenceSummary(state),
     departments: state.departments,
     places: state.places,
     services: state.services,

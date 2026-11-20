@@ -161,3 +161,15 @@ test('fails closed for missing capability and caller-authored organization autho
     /server-owned organization authority/,
   )
 })
+
+test('reads resources independently and applies exact employee filters', async () => {
+  const gateway = new OrganizationControllerGateway({ store: new InMemoryControllerAdministrationStore() })
+  const invitation = await gateway.createInvitation({ actor, email: 'reviewer@example.invalid', role: 'Reviewer', departmentReferences: [], groupReferences: [] })
+  const result = await gateway.acceptInvitation({ actor, invitationReference: invitation.invitation.reference, deviceReference: 'device:reviewer:one' })
+  assert.deepEqual(await gateway.readResource({ actor, resource: 'employees', filters: { email: invitation.invitation.email, role: invitation.invitation.role } }), [
+    Object.fromEntries(Object.entries(result.employee).filter(([key]) => key !== 'deviceReferences')),
+  ])
+  assert.deepEqual(await gateway.readResource({ actor, resource: 'employees', filters: { role: actor.employeeReference } }), [])
+  assert.deepEqual(await gateway.readResource({ actor, resource: 'devices' }), [{ employeeReference: result.employee.reference, deviceReferences: result.employee.deviceReferences }])
+  await assert.rejects(() => gateway.readResource({ actor: { ...actor, capabilities: [] }, resource: 'employees' }), /authoriz|capability/i)
+})
