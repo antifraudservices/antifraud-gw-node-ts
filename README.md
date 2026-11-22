@@ -436,6 +436,8 @@ Leave the setting unset to keep publication disabled. Only supply artifacts
 approved for public disclosure. Verify their signatures and issuer authority
 before configuring them.
 
+See [Public organization and professional credential contracts](docs/PUBLIC-CREDENTIALS.md) for the four URLs, signing authority, authenticated wallet delivery and SMART Health Cards.
+
 | Scope | `basePath` |
 | --- | --- |
 | Host | `/host/cds-{coverage}/v1/{network}` |
