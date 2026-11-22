@@ -1,6 +1,6 @@
 // Flow contract: authenticated BFFs call the neutral evidence and controller APIs without supplying actor, organization, zone, channel or smart-contract authority; the server resolves authority, records evidence, maintains organization Place and Service state, publishes only a coherent public catalog, exposes only the addressed issuer inbox and persists decisions. Unknown credentials and browser-supplied authority fail closed.
 import assert from 'node:assert/strict'
-import { createHash } from 'node:crypto'
+import { createHash, generateKeyPairSync, sign, verify } from 'node:crypto'
 import { once } from 'node:events'
 import { createServer } from 'node:http'
 import test from 'node:test'
@@ -19,6 +19,7 @@ import {
   OrganizationControllerGateway,
   StaticIssuerDirectory,
   createAntifraudGatewayHttpHandler,
+  parsePublicOrganizationCredentials,
 } from '../dist/index.js'
 
 const actors = new Map([
@@ -284,3 +285,74 @@ async function jsonRequest(url, method, token, body) {
   })
   return { response, body: await response.json() }
 }
+
+
+test('publishes standalone signed organization credentials only for configured scopes', async t => {
+  const context = 'https://www.w3.org/ns/credentials/v2'
+  const prefix = 'data:application/vc+jwt,'
+  const host = '/host/cds-EU/v1/test'
+  const tenant = '/tenant-issuer/cds-ES/v1/education'
+  const entries = [host, tenant].map((basePath, index) => {
+    const did = `did:web:issuer.example.invalid:organization:${index}`
+    const { privateKey, publicKey } = generateKeyPairSync('ec', { namedCurve: 'P-256' })
+    const compact = payload => {
+      const input = [JSON.stringify({ alg: 'ES256' }), JSON.stringify(payload)].map(value => Buffer.from(value).toString('base64url')).join('.')
+      return `${input}.${sign('sha256', Buffer.from(input), { key: privateKey, dsaEncoding: 'ieee-p1363' }).toString('base64url')}`
+    }
+    const common = { issuer: did, validFrom: new Date(0).toISOString() }
+    const unsignedOrganization = {
+      ...common, issuer: 'did:web:ica.example.invalid', '@context': [context, 'https://schema.org'], type: ['VerifiableCredential', 'OrganizationCredential'],
+      credentialSubject: { id: did, '@type': 'Organization' },
+    }
+    const [header, , signature] = compact(unsignedOrganization).split('.')
+    const organization = { ...unsignedOrganization, proof: { type: 'JsonWebSignature2020', jws: `${header}..${signature}` } }
+    const statement = { ...common, '@context': [context, 'https://w3id.org/gaia-x/development#'],
+      type: ['VerifiableCredential', 'LegalPerson'], credentialSubject: { id: did, type: 'gx:LegalPerson' } }
+    const token = compact(statement)
+    const [gaiaHeader, , gaiaSignature] = token.split('.')
+    const participantJson = { ...statement, proof: { type: 'JsonWebSignature2020', jws: `${gaiaHeader}..${gaiaSignature}` } }
+    const participant = { '@context': context, type: 'EnvelopedVerifiableCredential', id: prefix + token }
+    return { basePath, did, organization, participantJson, participant, publicKey }
+  })
+  const gateway = new EducationQualificationGateway({
+    ledger: new InMemoryQualificationLedger(), index: new InMemoryAddressedReferenceIndex(), directory: new StaticIssuerDirectory([]),
+  })
+  const configured = JSON.stringify(entries.map(({ publicKey, ...entry }) => entry))
+  const catalog = parsePublicOrganizationCredentials(configured)
+  const server = createServer(createAntifraudGatewayHttpHandler({
+    gateway, publicOrganizationCredentials: catalog, resolveActor: async () => undefined,
+  }))
+  server.listen(0, '127.0.0.1')
+  await once(server, 'listening')
+  t.after(() => server.close())
+  const baseUrl = `http://127.0.0.1:${server.address().port}`
+  for (const { basePath, organization, participantJson, participant, publicKey } of entries) {
+    const schema = await fetch(baseUrl + basePath + '/.well-known/organization.json')
+    assert.equal(schema.status, 200)
+    assert.deepEqual(await schema.json(), organization)
+    const json = await fetch(baseUrl + basePath + '/.well-known/vc.json')
+    assert.equal(json.status, 200)
+    assert.deepEqual(await json.json(), participantJson)
+    const gaia = await fetch(baseUrl + basePath + '/.well-known/legal-participant.vc.json')
+    assert.equal(gaia.status, 200)
+    const body = await gaia.json()
+    assert.deepEqual(body, participant)
+    const [header, payload, signature] = body.id.slice(prefix.length).split('.')
+    assert.ok(verify('sha256', Buffer.from(`${header}.${payload}`),
+      { key: publicKey, dsaEncoding: 'ieee-p1363' }, Buffer.from(signature, 'base64url')))
+  }
+  assert.equal((await fetch(baseUrl + tenant.replace('tenant-issuer', 'unknown') + '/.well-known/vc.json')).status, 404)
+  const disabled = createServer(createAntifraudGatewayHttpHandler({
+    gateway, publicOrganizationCredentials: parsePublicOrganizationCredentials(undefined), resolveActor: async () => undefined,
+  }))
+  disabled.listen(0, '127.0.0.1')
+  await once(disabled, 'listening')
+  t.after(() => disabled.close())
+  const disabledOrigin = `http://127.0.0.1:${disabled.address().port}`
+  assert.equal((await fetch(disabledOrigin + host + '/.well-known/vc.json')).status, 404)
+  assert.equal((await fetch(disabledOrigin + host + '/.well-known/organization.json')).status, 404)
+  assert.equal((await fetch(disabledOrigin + host + '/.well-known/legal-participant.vc.json')).status, 404)
+  const wrongCredential = JSON.parse(configured)
+  wrongCredential[0].did = wrongCredential[1].did
+  assert.throws(() => parsePublicOrganizationCredentials(JSON.stringify(wrongCredential)), /Invalid public organization credential configuration/)
+})

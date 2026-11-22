@@ -1,6 +1,7 @@
 import { createServer, type Server } from 'node:http'
 
 import { createAntifraudGatewayHttpHandler } from './index.js'
+import { parsePublicOrganizationCredentials } from './public-organization-credentials.js'
 import { createGatewayDemoRuntime } from './demo-runtime.js'
 
 type DemoEnvironment = Readonly<Record<string, string | undefined>>
@@ -16,5 +17,6 @@ export function createGatewayDemoServer(
     artifacts: runtime.artifacts,
     publications: runtime.publications,
     resolveActor: runtime.resolveActor,
+    publicOrganizationCredentials: parsePublicOrganizationCredentials(environment.ANTIFRAUD_PUBLIC_ORGANIZATION_CREDENTIALS_JSON),
   }))
 }

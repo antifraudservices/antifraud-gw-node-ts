@@ -2,6 +2,7 @@ import { CONTROLLER_READ_RESOURCES, ControllerAccessDenied } from './controller-
 import type {GaiaXComplianceVerifier} from './gaia-x-compliance-verification.js'
 import type {CredentialPresentationVerifier, CredentialPresentationRequest} from './credential-presentation-verification.js'
 import type { IncomingMessage, RequestListener, ServerResponse } from 'node:http'
+import { isPublicOrganizationCredentialRoute, type PublicOrganizationCredentials } from './public-organization-credentials.js'
 import { createHash } from 'node:crypto'
 import type { OrganizationControllerGateway } from './controller-administration.js'
 import {
@@ -19,6 +20,7 @@ import {
 } from 'antifraud-data-utils-ts'
 import type {SocialPublicationDemoGateway} from './social-publication-demo.js'
 export * from './gaia-x-compliance-verification.js'
+export * from './public-organization-credentials.js'
 export * from './credential-presentation-verification.js'
 export * from './controller-administration.js'
 export * from './demo-persistence.js'
@@ -596,6 +598,7 @@ export function createAntifraudGatewayHttpHandler(input: {
   publications?: SocialPublicationDemoGateway
   presentationVerifier?: CredentialPresentationVerifier
   gaiaXVerifier?: GaiaXComplianceVerifier
+  publicOrganizationCredentials?: PublicOrganizationCredentials
   resolveActor: (bearerCredential: string) => Promise<WorkforceActor | undefined>
 }): RequestListener {
   return (request, response) => {
@@ -611,6 +614,7 @@ async function handleGatewayRequest(
     publications?: SocialPublicationDemoGateway
     presentationVerifier?: CredentialPresentationVerifier
     gaiaXVerifier?: GaiaXComplianceVerifier
+    publicOrganizationCredentials?: PublicOrganizationCredentials
     resolveActor: (bearerCredential: string) => Promise<WorkforceActor | undefined>
   },
   request: IncomingMessage,
@@ -620,6 +624,11 @@ async function handleGatewayRequest(
     const url = new URL(request.url ?? '/', 'http://gateway.invalid')
     if (request.method === 'GET' && (url.pathname === '/healthz' || url.pathname === '/health')) {
       writeJson(response, 200, { status: 'ok' })
+      return
+    }
+    if (request.method === 'GET' && isPublicOrganizationCredentialRoute(url.pathname)) {
+      const credential = input.publicOrganizationCredentials?.read(url.pathname)
+      writeJson(response, credential ? 200 : 404, credential ?? { error: 'Credential unavailable.' })
       return
     }
     const publicServiceCatalogMatch = request.method === 'GET'

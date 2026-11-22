@@ -262,6 +262,7 @@ inheriting its application model or deployment identity.
 | Pinned signature, JOSE policy and exact request digest | adopted | `antifraud-data-utils-ts/clearing-house` |
 | Active registered holder, workforce assignment, group authorization and exact use permission | profile-specific | `CredentialPresentationAuthority` and `CredentialPresentationVerifier` |
 | Current issuer trust, credential state and single-use presentation | adopted | required authority and replay ports |
+| Public schema.org and Gaia-X organization credential routes | adopted with explicit configuration | Read-only publication of reviewed signed artifacts for configured scopes |
 | Signed Gaia-X Standard Compliance result, explicit rules and exact credential coverage | adopted | `GaiaXSubmissionAuthority` and `GaiaXComplianceVerifier` |
 | Signed tenant endpoint and receipt primitives | already-equivalent | shared neutral tenant trust and receipt contracts |
 | Clinical SMART token and EHR transport | profile-specific | outside the education-qualification gateway |
