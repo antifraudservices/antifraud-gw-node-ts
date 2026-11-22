@@ -425,3 +425,29 @@ deployment details remain in their controlled environments.
 ## Licence
 
 Copyright 2026 Antifraud Services Inc. Licensed under Apache-2.0.
+
+
+## Optional public organization credentials
+
+The gateway can publish three reviewed, already-signed publications for each
+configured host or tenant. Set `ANTIFRAUD_PUBLIC_ORGANIZATION_CREDENTIALS_JSON`
+to an array with `basePath`, `did`, `organization`, `participantJson` and `participant` per scope.
+Leave the setting unset to keep publication disabled. Only supply artifacts
+approved for public disclosure. Verify their signatures and issuer authority
+before configuring them.
+
+| Scope | `basePath` |
+| --- | --- |
+| Host | `/host/cds-{coverage}/v1/{network}` |
+| Tenant | `/{tenantId}/cds-{jurisdiction}/v1/{sector}` |
+
+- `GET {basePath}/.well-known/organization.json` returns the original signed ICA
+  `OrganizationCredential`, whose subject is an `Organization` in schema.org.
+- `GET {basePath}/.well-known/vc.json` returns the participant-signed
+  `gx:LegalPerson` in JSON with its detached proof.
+- `GET {basePath}/.well-known/legal-participant.vc.json` returns an
+  `EnvelopedVerifiableCredential` JSON container. Its top-level `id` is
+  `data:application/vc+jwt,<JWS>`. The signed subject is `gx:LegalPerson`.
+- The routes return HTTP 404 for unconfigured scopes. Publication does not
+  onboard an organization, write to Fabric or constitute Gaia-X compliance
+  verification.

@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Support opt-in discovery of the original ICA organization credential and both participant-signed Gaia-X representations.
+
 - Pin the published credential and controller SDK contracts required by the
   gateway so the locked dependency tree builds in the deployment image.
 
